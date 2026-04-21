@@ -1,0 +1,241 @@
+table dim_produtos
+	lineageTag: 1b2e1be8-ec98-4ffd-8502-bb3215e4e087
+
+	column cd_produto
+		dataType: double
+		formatString: 0
+		lineageTag: 8fe8a88d-5def-4d7b-8717-0695bb434a63
+		summarizeBy: sum
+		sourceColumn: cd_produto
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isDecimal":true}
+
+	column cd_referencia
+		dataType: string
+		lineageTag: 5147edbb-fb4a-49e3-a648-3d740540829e
+		summarizeBy: none
+		sourceColumn: cd_referencia
+
+		annotation SummarizationSetBy = Automatic
+
+	column ds_produto
+		dataType: string
+		lineageTag: 422749a0-b372-4235-a2be-6da81fa4c3a9
+		summarizeBy: none
+		sourceColumn: ds_produto
+
+		annotation SummarizationSetBy = Automatic
+
+	column ds_marca
+		dataType: string
+		lineageTag: ad325bda-2089-4e12-b994-2f27867d82a2
+		summarizeBy: none
+		sourceColumn: ds_marca
+
+		annotation SummarizationSetBy = Automatic
+
+	column ds_grupo
+		dataType: string
+		lineageTag: 4f5c45e3-00d8-4957-8afd-34532e1e0e55
+		summarizeBy: none
+		sourceColumn: ds_grupo
+
+		annotation SummarizationSetBy = Automatic
+
+	column status
+		dataType: string
+		lineageTag: d43e776a-04d5-409c-addf-43bb8dc0aec0
+		summarizeBy: none
+		sourceColumn: status
+
+		annotation SummarizationSetBy = Automatic
+
+	column ds_unidade
+		dataType: string
+		lineageTag: 859c28fd-669d-4179-b298-5348d934ba95
+		summarizeBy: none
+		sourceColumn: ds_unidade
+
+		annotation SummarizationSetBy = Automatic
+
+	column EstoqueMin
+		dataType: double
+		lineageTag: 753b9175-2dc5-490b-a567-cc68fc0e791d
+		summarizeBy: sum
+		sourceColumn: EstoqueMin
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column preco_compra
+		dataType: double
+		lineageTag: 986994e1-187a-4d88-a8ae-021404cc75df
+		summarizeBy: sum
+		sourceColumn: preco_compra
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column preco_venda
+		dataType: double
+		lineageTag: 6cf40f4e-a771-4505-bfc3-e19f23bfa2c9
+		summarizeBy: sum
+		sourceColumn: preco_venda
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column peso_bruto
+		dataType: double
+		lineageTag: c9a8e66b-e57e-4053-8446-b419f3c9c6de
+		summarizeBy: sum
+		sourceColumn: peso_bruto
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column ds_sistema
+		dataType: string
+		lineageTag: 30327ea1-37f7-480a-b14b-f2c36cc64125
+		summarizeBy: none
+		sourceColumn: ds_sistema
+
+		annotation SummarizationSetBy = Automatic
+
+	column id_produto
+		dataType: string
+		lineageTag: 8da4d10f-2555-4347-9b1e-67af511b1723
+		summarizeBy: none
+		sourceColumn: id_produto
+
+		annotation SummarizationSetBy = Automatic
+
+	column dt_ultima_entrada =
+			
+			MAXX(
+			    FILTER(
+			        fat_movimento ,
+			        fat_movimento[id_produto] = dim_produtos[id_produto] &&
+			        fat_movimento[tipo_movimento] = "E" &&
+			        fat_movimento[stMov] = "E" &&
+			        fat_movimento[finNFe] <> 4) ,
+			    fat_movimento[dt_movimento])
+		formatString: Short Date
+		lineageTag: afc06a20-a03d-48eb-af87-d3c8fc6b6d04
+		summarizeBy: none
+
+		variation Variation
+			isDefault
+			relationship: 8d1ab68c-86a9-43ef-bd22-8a806f48e913
+			defaultHierarchy: LocalDateTable_f0527294-4761-4457-a512-60eb1aa827c5.'Hierarquia de datas'
+
+		changedProperty = DataType
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column dt_ultima_venda =
+			
+			MAXX(
+			    FILTER(
+			        fat_vendas ,
+			        fat_vendas[id_produto] = dim_produtos[id_produto]) ,
+			    fat_vendas[dt_venda])
+		formatString: Short Date
+		lineageTag: 170dfab1-ed89-4a4e-a3f9-eabee7ce049f
+		summarizeBy: none
+
+		variation Variation
+			isDefault
+			relationship: 52985eea-18bc-446d-b113-c62f874361a9
+			defaultHierarchy: LocalDateTable_c7c1506d-3c02-4d56-9bb3-2827af3d5ca9.'Hierarquia de datas'
+
+		changedProperty = DataType
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column qtd_saldo_estoque = [saldo_estoque_all]
+		lineageTag: 522ee7a5-8e91-4233-a236-39a543a297c7
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column qtd_dias_sem_venda =
+			
+			[qtd_dias_sem_venda]
+		formatString: 0
+		lineageTag: 2de85816-4240-41b5-8846-b5ac6815844f
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	column ds_agrupamento
+		dataType: string
+		lineageTag: 174644c1-ce9e-4072-ad89-6cac4be14b06
+		summarizeBy: none
+		sourceColumn: ds_agrupamento
+
+		annotation SummarizationSetBy = Automatic
+
+	column prod = dim_produtos[cd_produto] &" - "&dim_produtos[ds_produto]
+		lineageTag: f41eb753-1e31-464b-99cc-092959fc5a02
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Qtd de Ocorrências' =
+			
+			CALCULATE(
+			    COUNTROWS(dim_produtos),
+			    ALLEXCEPT(dim_produtos, dim_produtos[cd_produto])
+			)
+		formatString: 0
+		lineageTag: 3affa4a4-e93c-4de5-b52a-3ef9471197a5
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Qtd ds_produto diferentes' =
+			
+			CALCULATE(
+			    DISTINCTCOUNT(dim_produtos[ds_produto]),
+			    ALLEXCEPT(dim_produtos, dim_produtos[cd_produto])
+			)
+		formatString: 0
+		lineageTag: d1e43bc6-fa9d-4448-8a6a-3d3b35e93b70
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	partition dim_produtos = m
+		mode: import
+		source =
+				let
+				    Fonte = PowerPlatform.Dataflows(null),
+				    Workspaces = Fonte{[Id="Workspaces"]}[Data],
+				    #"3302bffe-37e3-48cf-8e61-0e1eba5f63ce" = Workspaces{[workspaceId="3302bffe-37e3-48cf-8e61-0e1eba5f63ce"]}[Data],
+				    #"0e903939-a26b-42c1-9cc2-baebc4f5b136" = #"3302bffe-37e3-48cf-8e61-0e1eba5f63ce"{[dataflowId="0e903939-a26b-42c1-9cc2-baebc4f5b136"]}[Data],
+				    dim_produtos_ = #"0e903939-a26b-42c1-9cc2-baebc4f5b136"{[entity="dim_produtos",version=""]}[Data],
+				    #"Consultas Mescladas" = Table.NestedJoin(dim_produtos_, {"ds_grupo"}, dim_agrupamentos, {"Grupo"}, "dim_agrupamentos", JoinKind.LeftOuter),
+				    #"dim_agrupamentos Expandido" = Table.ExpandTableColumn(#"Consultas Mescladas", "dim_agrupamentos", {"ds_agrupamento"}, {"ds_agrupamento"}),
+				    #"Tipo Alterado" = Table.TransformColumnTypes(#"dim_agrupamentos Expandido",{{"cd_produto", Int64.Type}}),
+				    #"Personalização Adicionada" = Table.AddColumn(#"Tipo Alterado", "id_produto", each Text.From([cd_produto]) & Text.From([ds_sistema])),
+				    #"Tipo Alterado1" = Table.TransformColumnTypes(#"Personalização Adicionada",{{"cd_produto", type number}})
+				in
+				    #"Tipo Alterado1"
+
+	annotation PBI_ResultType = Table
+
+	annotation PBI_NavigationStepName = Navegação
+

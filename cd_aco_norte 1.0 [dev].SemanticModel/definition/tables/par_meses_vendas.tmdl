@@ -1,0 +1,26 @@
+table par_meses_vendas
+	lineageTag: 94f6e643-7ede-4c87-b00d-ffeae4d24136
+
+	measure 'Valor par_meses_vendas' = SELECTEDVALUE('par_meses_vendas'[par_meses_vendas])
+		formatString: 0
+		lineageTag: f3bd336f-0a1e-4c7c-bca6-5705dcee744c
+
+	column par_meses_vendas
+		formatString: 0
+		lineageTag: 9dc588e4-3930-4e72-aece-a7645ddc9ed2
+		summarizeBy: none
+		sourceColumn: [Value]
+
+		extendedProperty ParameterMetadata =
+				{
+				  "version": 0
+				}
+
+		annotation SummarizationSetBy = User
+
+	partition par_meses_vendas-7c5a176f-22d1-4d0c-b554-20fbf22215ec = calculated
+		mode: import
+		source = GENERATESERIES(1, 12, 1)
+
+	annotation PBI_Id = f320827282294058ae01e65c504cffd0
+

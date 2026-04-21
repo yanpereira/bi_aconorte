@@ -1,0 +1,56 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.7.0/schema.json",
+  "name": "4755b6f289cc3be6e404",
+  "position": {
+    "x": 1324.2419481539671,
+    "y": 255.08641005498785,
+    "z": 16000,
+    "height": 150,
+    "width": 595.75805184603291,
+    "tabOrder": 16000
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "autoSelectVisualType": true,
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "par_dias_vendas"
+                    }
+                  },
+                  "Property": "par_dias_vendas"
+                }
+              },
+              "queryRef": "par_dias_vendas.par_dias_vendas",
+              "nativeQueryRef": "par_dias_vendas"
+            }
+          ]
+        }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Column": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "par_dias_vendas"
+                  }
+                },
+                "Property": "par_dias_vendas"
+              }
+            },
+            "direction": "Ascending"
+          }
+        ]
+      }
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

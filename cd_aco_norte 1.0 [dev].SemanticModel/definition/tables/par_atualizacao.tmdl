@@ -1,0 +1,39 @@
+table par_atualizacao
+	lineageTag: 79d2c8fd-ac06-43ac-a8d3-a05c2a2e2a78
+
+	column Column1
+		dataType: string
+		lineageTag: cc4e38d1-6569-43c4-90a1-464e09458d1d
+		summarizeBy: none
+		sourceColumn: Column1
+
+		annotation SummarizationSetBy = Automatic
+
+	column dt_hr_atualizacao = par_atualizacao[Column1] - (3/24)
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 794315af-33b1-4096-be53-8cbb2f8db1a4
+		summarizeBy: none
+
+		variation Variation
+			isDefault
+			relationship: c7f0f01d-f6cd-493d-8202-aeff34538866
+			defaultHierarchy: LocalDateTable_33d01945-020f-4be8-a507-3a2621b35d57.'Hierarquia de datas'
+
+		changedProperty = DataType
+
+		annotation SummarizationSetBy = Automatic
+
+	partition par_atualizacao-b91032e1-7335-40f1-af88-bc6f0ab23ae0 = m
+		mode: import
+		source =
+				let
+				    Fonte = Consulta1(),
+				    #"Convertido para Tabela" = #table(1, {{Fonte}})
+				in
+				    #"Convertido para Tabela"
+
+	annotation PBI_ResultType = Table
+
+	annotation PBI_NavigationStepName = Navegação
+

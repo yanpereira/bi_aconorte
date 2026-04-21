@@ -1,0 +1,123 @@
+table dim_planos
+	lineageTag: aeb98f59-b645-4461-ab07-1b2b662b127f
+
+	column idPlanoVenda
+		dataType: int64
+		formatString: 0
+		lineageTag: ad297378-0ac1-42f8-b008-3e0128f27de0
+		summarizeBy: none
+		sourceColumn: idPlanoVenda
+
+		annotation SummarizationSetBy = Automatic
+
+	column nome
+		dataType: string
+		lineageTag: a851011b-65e5-4627-bc0a-8090bac491d7
+		summarizeBy: none
+		sourceColumn: nome
+
+		annotation SummarizationSetBy = Automatic
+
+	column ativo
+		dataType: string
+		lineageTag: 5ee12966-6d61-438a-b014-a861b4a1fbc8
+		summarizeBy: none
+		sourceColumn: ativo
+
+		annotation SummarizationSetBy = Automatic
+
+	column entradaMin
+		dataType: double
+		lineageTag: cd03b826-c4be-438f-915f-ba29e8e20e2f
+		summarizeBy: sum
+		sourceColumn: entradaMin
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column descontoMax
+		dataType: double
+		lineageTag: 2a1104b4-9c28-4207-ab28-b32a3a06263a
+		summarizeBy: sum
+		sourceColumn: descontoMax
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column acrescimoMax
+		dataType: double
+		lineageTag: 9ba038f0-101d-4eb2-b0a0-4b29bccbd3c1
+		summarizeBy: sum
+		sourceColumn: acrescimoMax
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column juros
+		dataType: double
+		lineageTag: 5aed51f2-67c2-46ee-8d85-67383a34cf78
+		summarizeBy: sum
+		sourceColumn: juros
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column comissao
+		dataType: double
+		lineageTag: abc27b18-ca3a-4d64-abfb-713f86ea37ba
+		summarizeBy: sum
+		sourceColumn: comissao
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column intervalo
+		dataType: string
+		lineageTag: 2051b6ed-bd99-4c43-a67b-4c3c6d12b136
+		summarizeBy: none
+		sourceColumn: intervalo
+
+		annotation SummarizationSetBy = Automatic
+
+	column codTipoPgEnt
+		dataType: string
+		lineageTag: 17c4307d-4785-4a95-8636-299050991c0e
+		summarizeBy: none
+		sourceColumn: codTipoPgEnt
+
+		annotation SummarizationSetBy = Automatic
+
+	column codTipoPgPar
+		dataType: string
+		lineageTag: ff35c835-c59a-491f-9b6b-1fb9856d5383
+		summarizeBy: none
+		sourceColumn: codTipoPgPar
+
+		annotation SummarizationSetBy = Automatic
+
+	column baixarEntrada
+		dataType: string
+		lineageTag: c0cec83d-c8b4-46db-96a6-6b1dbe1e95a8
+		summarizeBy: none
+		sourceColumn: baixarEntrada
+
+		annotation SummarizationSetBy = Automatic
+
+	partition dim_planos = m
+		mode: import
+		source =
+				let
+				    Fonte = Table.FromRows(Json.Document(Binary.Decompress(Binary.FromText("nZTdjoIwEIVfZcLVbmICLRb0skLjslHKArsxUZ9mr/a5fLGd4adUqdp4MWXSdD7OTA8cjwELFoGEn6JpJWYNBosiXAVFl41BDzYuTXBeHAOOGT9AJuv28quhknWmdjLXuF0OVcIiUMTR6RRHI4Z3JwkVY5Zf/jZFqwcdbhVTbWxql5ht9E55lyamlE6VupVQ1XpfNI2uC+kJSQ2EcNmH+vpWz0uXQ/SVqalEASqX7Xx4914vDGRF+3gLA+fOJTznrDGrVaY2xV6VrYZSAj5rtX08kXQkrQyJ0b6xRYad+V/rZAnGhsYc9npEIoO5TcYoXR6g1ND7Bd6YgLyQzfuTaY1Mmzu5iMW90okbR2EShevIE+tATqYGJkii531aCDrGr7rtZPn06qAlfY8Waik8aXeIaa9vMK6fuLlt2cqa1AF4BK9Ni+wPZuJh7HN3cwzvrJ+rSjfoedjIEu1b+H6M0yfEWT+cq3G/dnOcB/YPwtOa80Fzcnklt7L/Pag97PSnvMHYEOFoy7K1OMBgIhGmYq7otjcmTidOzy539CkmNk7ujSN85icbSjDuGlhiOYqcgCIfYEhXHw4UeXzmBmCrmUtvIzHCugVx538=", BinaryEncoding.Base64), Compression.Deflate)), let _t = ((type nullable text) meta [Serialized.Text = true]) in type table [idPlanoVenda = _t, nome = _t, ativo = _t, entradaMin = _t, descontoMax = _t, acrescimoMax = _t, juros = _t, comissao = _t, intervalo = _t, codTipoPgEnt = _t, codTipoPgPar = _t, baixarEntrada = _t]),
+				    #"Tipo Alterado" = Table.TransformColumnTypes(Fonte,{{"idPlanoVenda", Int64.Type}, {"nome", type text}, {"ativo", type text}, {"entradaMin", type number}, {"descontoMax", type number}, {"acrescimoMax", type number}, {"juros", type number}, {"comissao", type number}, {"intervalo", type text}, {"codTipoPgEnt", type text}, {"codTipoPgPar", type text}, {"baixarEntrada", type text}})
+				in
+				    #"Tipo Alterado"
+
+	annotation PBI_NavigationStepName = Navegação
+
+	annotation PBI_ResultType = Table
+

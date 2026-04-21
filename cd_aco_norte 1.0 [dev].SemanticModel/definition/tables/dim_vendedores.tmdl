@@ -1,0 +1,32 @@
+table dim_vendedores
+	lineageTag: b3d04ecb-b7c0-48af-ae8f-3372471dd828
+
+	column ds_pessoa
+		lineageTag: 3827cddd-6353-428c-bdb2-14ad4e170d72
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: dim_pessoas[ds_pessoa]
+
+		annotation SummarizationSetBy = Automatic
+
+	column id_pessoa
+		lineageTag: 7703d25e-6204-4422-a4cf-b48f4117f23c
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: dim_pessoas[id_pessoa]
+
+		annotation SummarizationSetBy = Automatic
+
+	partition dim_vendedores-78afa680-e4b8-4cbf-8cc9-84bd749f7aa5 = calculated
+		mode: import
+		source =
+				
+				SUMMARIZE(
+				    FILTER(
+				        dim_pessoas ,
+				        dim_pessoas[flag_vendedor] = "S") ,
+				    dim_pessoas[id_pessoa] ,
+				    dim_pessoas[ds_pessoa])
+
+	annotation PBI_Id = 44f5782a77a343709cd395fa2623153c
+

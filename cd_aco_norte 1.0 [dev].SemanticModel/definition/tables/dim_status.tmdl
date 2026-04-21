@@ -1,0 +1,23 @@
+table dim_status
+	lineageTag: 9abaf92d-7913-4282-a387-446ed40a442f
+
+	column status
+		lineageTag: 82abf5e8-2211-4a42-b947-753219c0fc2a
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: Produtos Convert[status]
+
+		annotation SummarizationSetBy = Automatic
+
+	partition dim_status = calculated
+		mode: import
+		source =
+				
+				SUMMARIZE(
+				    FILTER(
+				        'Produtos Convert' ,
+				        'Produtos Convert'[status] <> BLANK()) ,
+				    'Produtos Convert'[status])
+
+	annotation PBI_Id = 37bc28bc2fbc4fe3b880a4bedadae22b
+

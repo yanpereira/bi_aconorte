@@ -1,0 +1,23 @@
+expression Consulta1 =
+		let
+		    Fonte = DateTime.LocalNow
+		in
+		    Fonte
+	lineageTag: e72323d2-42a0-40fc-ba72-15d1b95b0acc
+
+	annotation PBI_NavigationStepName = Navegação
+
+	annotation PBI_ResultType = Function
+
+expression dim_agrupamentos =
+		let
+		    Fonte = Table.FromRows(Json.Document(Binary.Decompress(Binary.FromText("hZJBTsMwEEWvEmVd9Q4Te5pYsj1m7HRB1EUXlUCqqBTgDJyAE7DgILkYQyJWjNX18x////WnqU1owaBjyI0hvz+6fs9gHXK7a83t5fVtfl++l69be9pNbQfM0JgBCgjOl3k+X58u8/N5pdZlQ1kB6LEwWZUl5IPzCijoB9AUPTJ4zV0AuwbRmGQbo2RM4mN8dFZ/hbmw60hDibEnVSRG9Wv1HqXlu16OyD34YfnEe4FiqWSGWCj+VqLVO3aUmx606gMW8BQrFBgCquugzkUXB+27dQLOVBpk9G750FNsm2O0FK12+c9s4qLFhNCRLDs0gbwmP6DM2Y5qR0IS1EraCtR/XYU1R6KroC3qwwhWpvPP0OkH", BinaryEncoding.Base64), Compression.Deflate)), let _t = ((type nullable text) meta [Serialized.Text = true]) in type table [Grupo = _t, ds_agrupamento = _t]),
+		    #"Tipo Alterado" = Table.TransformColumnTypes(Fonte,{{"Grupo", type text}, {"ds_agrupamento", type text}})
+		in
+		    #"Tipo Alterado"
+	lineageTag: c7e06f54-335e-4362-8700-8bf3035a5044
+
+	annotation PBI_NavigationStepName = Navegação
+
+	annotation PBI_ResultType = Table
+

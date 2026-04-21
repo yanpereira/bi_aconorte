@@ -1,0 +1,78 @@
+table dim_tipo_pg
+	lineageTag: 14fa73b2-5bf6-4f50-9997-57d4af7df80b
+
+	column idTipoPg
+		dataType: int64
+		formatString: 0
+		lineageTag: cf382a54-32c8-4ace-b68a-ef3add88419e
+		summarizeBy: sum
+		sourceColumn: idTipoPg
+
+		annotation SummarizationSetBy = Automatic
+
+	column codTipoPg
+		dataType: string
+		lineageTag: e9d3d62d-917e-474c-845b-c8f7d74bde0b
+		summarizeBy: none
+		sourceColumn: codTipoPg
+
+		annotation SummarizationSetBy = Automatic
+
+	column descricao
+		dataType: string
+		lineageTag: 85ce7767-370c-4954-99f6-380d0468a985
+		summarizeBy: none
+		sourceColumn: descricao
+
+		annotation SummarizationSetBy = Automatic
+
+	column parcelado
+		dataType: string
+		lineageTag: 3d9fa6c9-5502-44b9-99cd-e0ca34352594
+		summarizeBy: none
+		sourceColumn: parcelado
+
+		annotation SummarizationSetBy = Automatic
+
+	column tPag
+		dataType: int64
+		formatString: 0
+		lineageTag: e9aa57c7-71bc-4d94-b4f8-3e4616922c03
+		summarizeBy: sum
+		sourceColumn: tPag
+
+		annotation SummarizationSetBy = Automatic
+
+	column tpPix
+		dataType: string
+		lineageTag: 2d06435d-8980-4d49-9624-bb3dc95f1a8a
+		summarizeBy: none
+		sourceColumn: tpPix
+
+		annotation SummarizationSetBy = Automatic
+
+	column chavePix
+		dataType: string
+		lineageTag: 9dd91827-ed9d-40fc-b8fd-5a0e00460297
+		summarizeBy: none
+		sourceColumn: chavePix
+
+		annotation SummarizationSetBy = Automatic
+
+	partition dim_tipo_pg = m
+		mode: import
+		source =
+				let
+				    Fonte = PowerPlatform.Dataflows(null),
+				    Workspaces = Fonte{[Id="Workspaces"]}[Data],
+				    #"3302bffe-37e3-48cf-8e61-0e1eba5f63ce" = Workspaces{[workspaceId="3302bffe-37e3-48cf-8e61-0e1eba5f63ce"]}[Data],
+				    #"0e903939-a26b-42c1-9cc2-baebc4f5b136" = #"3302bffe-37e3-48cf-8e61-0e1eba5f63ce"{[dataflowId="0e903939-a26b-42c1-9cc2-baebc4f5b136"]}[Data],
+				    dim_tipo_pg_ = #"0e903939-a26b-42c1-9cc2-baebc4f5b136"{[entity="dim_tipo_pg",version=""]}[Data],
+				    #"Duplicatas Removidas" = Table.Distinct(dim_tipo_pg_, {"idTipoPg"})
+				in
+				    #"Duplicatas Removidas"
+
+	annotation PBI_NavigationStepName = Navegação
+
+	annotation PBI_ResultType = Table
+

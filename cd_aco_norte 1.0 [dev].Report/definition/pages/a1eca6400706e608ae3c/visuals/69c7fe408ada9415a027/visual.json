@@ -1,0 +1,39 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.7.0/schema.json",
+  "name": "69c7fe408ada9415a027",
+  "position": {
+    "x": 1576.1194029850747,
+    "y": 930.58915946582886,
+    "z": 12000,
+    "height": 149.31657501963866,
+    "width": 312.20738413197176,
+    "tabOrder": 12000
+  },
+  "visual": {
+    "visualType": "card",
+    "autoSelectVisualType": true,
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Medidas"
+                    }
+                  },
+                  "Property": "qtd_meses_capacidade_estoqueII"
+                }
+              },
+              "queryRef": "Medidas.qtd_meses_capacidade_estoqueII",
+              "nativeQueryRef": "qtd_meses_capacidade_estoqueII"
+            }
+          ]
+        }
+      }
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

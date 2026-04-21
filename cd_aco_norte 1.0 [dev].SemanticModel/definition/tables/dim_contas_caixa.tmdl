@@ -1,0 +1,520 @@
+table dim_contas_caixa
+	lineageTag: 1e2d4acf-d81e-46a5-97fc-56fad855ce43
+
+	column idConta
+		dataType: int64
+		lineageTag: d2d2f2df-83be-45a7-b6fc-032db9780cdd
+		summarizeBy: sum
+		sourceColumn: idConta
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column tpOrigem
+		dataType: string
+		lineageTag: e80981ce-73b1-497f-95f4-7551f7fe1a92
+		summarizeBy: none
+		sourceColumn: tpOrigem
+
+		annotation SummarizationSetBy = Automatic
+
+	column tipo
+		dataType: string
+		lineageTag: e7287417-f820-4622-9621-d673a07420bb
+		summarizeBy: none
+		sourceColumn: tipo
+
+		annotation SummarizationSetBy = Automatic
+
+	column status
+		dataType: string
+		lineageTag: ee49a482-fc70-40c0-b5a4-e2ddf6c677fe
+		summarizeBy: none
+		sourceColumn: status
+
+		annotation SummarizationSetBy = Automatic
+
+	column idOrigem
+		dataType: int64
+		lineageTag: 5e18b848-0e8d-49a1-bae7-2d9cab33696f
+		summarizeBy: sum
+		sourceColumn: idOrigem
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column idPessoa
+		dataType: int64
+		formatString: 0
+		lineageTag: b412db7b-0b42-4064-bf9e-c496357c0aed
+		summarizeBy: sum
+		sourceColumn: idPessoa
+
+		annotation SummarizationSetBy = Automatic
+
+	column parcela
+		dataType: int64
+		formatString: 0
+		lineageTag: d243ad65-1ef2-42ad-9dc0-582ee8c5b437
+		summarizeBy: sum
+		sourceColumn: parcela
+
+		annotation SummarizationSetBy = Automatic
+
+	column qtdeParcelas
+		dataType: int64
+		formatString: 0
+		lineageTag: 4a9c03bd-386c-4d2a-81cd-400f445d2321
+		summarizeBy: sum
+		sourceColumn: qtdeParcelas
+
+		annotation SummarizationSetBy = Automatic
+
+	column historico
+		dataType: string
+		lineageTag: e22ea1f3-53bb-43a8-9bc0-553f5d2cd4d8
+		summarizeBy: none
+		sourceColumn: historico
+
+		annotation SummarizationSetBy = Automatic
+
+	column codContasCaixa
+		dataType: string
+		lineageTag: 45ef5685-fee1-4f73-9ade-ff01e60e91ec
+		summarizeBy: none
+		sourceColumn: codContasCaixa
+
+		annotation SummarizationSetBy = Automatic
+
+	column caixaLancamento
+		dataType: int64
+		formatString: 0
+		lineageTag: 6be93c5a-e4de-40ec-be92-fcf3ba3f136b
+		summarizeBy: sum
+		sourceColumn: caixaLancamento
+
+		annotation SummarizationSetBy = Automatic
+
+	column dtLancamento
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 25c3a7c3-7bba-4462-950d-2d18bdf25517
+		summarizeBy: none
+		sourceColumn: dtLancamento
+
+		variation Variation
+			isDefault
+			relationship: 77f14f6b-b83e-462f-a39b-68be8fbcb718
+			defaultHierarchy: LocalDateTable_5b9ee7e7-179e-425f-a14f-d299d1f72e4c.'Hierarquia de datas'
+
+		annotation SummarizationSetBy = Automatic
+
+	column dtVencimento
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: adae8218-d19a-4468-8d17-8880253020b3
+		summarizeBy: none
+		sourceColumn: dtVencimento
+
+		variation Variation
+			isDefault
+			relationship: e73035b1-78f6-4bb4-84a8-43b7db097b33
+			defaultHierarchy: LocalDateTable_906242b9-1820-41ee-a0bb-02db02e81857.'Hierarquia de datas'
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column valor
+		dataType: double
+		lineageTag: c52cb915-c304-4f28-9ce0-36d544d6d330
+		summarizeBy: sum
+		sourceColumn: valor
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column valDesconto
+		dataType: double
+		lineageTag: 75c36918-a874-49c3-a208-0173ccacbc13
+		summarizeBy: sum
+		sourceColumn: valDesconto
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column valMulta
+		dataType: double
+		lineageTag: ab15f99c-e07a-4c4e-820e-958b42b8822d
+		summarizeBy: sum
+		sourceColumn: valMulta
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column valJuros
+		dataType: double
+		lineageTag: db4defaa-1a23-4546-b863-cf569f6cceec
+		summarizeBy: sum
+		sourceColumn: valJuros
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column valTaxa
+		dataType: double
+		lineageTag: 002e1dd3-f4c0-4ee8-8b11-60dec6acce01
+		summarizeBy: sum
+		sourceColumn: valTaxa
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column caixaBaixa
+		dataType: int64
+		formatString: 0
+		lineageTag: f7f0d862-171b-4b97-a021-442d7f3de8a1
+		summarizeBy: sum
+		sourceColumn: caixaBaixa
+
+		annotation SummarizationSetBy = Automatic
+
+	column dtBaixa
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: f3d29442-7d43-4f45-96db-395b517c8398
+		summarizeBy: none
+		sourceColumn: dtBaixa
+
+		variation Variation
+			isDefault
+			relationship: 5755f316-2524-493c-ab9a-f04ebfa86030
+			defaultHierarchy: LocalDateTable_35282be8-4c31-44f3-bbe8-5a91cd2e327f.'Hierarquia de datas'
+
+		annotation SummarizationSetBy = Automatic
+
+	column codTipoPg
+		dataType: string
+		lineageTag: 886efba3-166b-4bae-b096-0db33cdddaa7
+		summarizeBy: none
+		sourceColumn: codTipoPg
+
+		annotation SummarizationSetBy = Automatic
+
+	column valBaixa
+		dataType: double
+		lineageTag: add9fe32-e434-4a71-bae0-d0b12fb56c62
+		summarizeBy: sum
+		sourceColumn: valBaixa
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column motivoExtorno
+		dataType: string
+		lineageTag: 497bf86d-2151-4e81-921b-363264cd14eb
+		summarizeBy: none
+		sourceColumn: motivoExtorno
+
+		annotation SummarizationSetBy = Automatic
+
+	column caixaExtorno
+		dataType: int64
+		formatString: 0
+		lineageTag: 99189a11-aa89-4613-ab67-4aa3400ed473
+		summarizeBy: sum
+		sourceColumn: caixaExtorno
+
+		annotation SummarizationSetBy = Automatic
+
+	column dtExtorno
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: f4a2dd2a-044a-4e98-b5ac-112d391b7ff7
+		summarizeBy: none
+		sourceColumn: dtExtorno
+
+		variation Variation
+			isDefault
+			relationship: ba9ab8ce-1eec-427c-8c5c-c37e0172e906
+			defaultHierarchy: LocalDateTable_711d66bd-71df-48db-b81d-999970e43440.'Hierarquia de datas'
+
+		annotation SummarizationSetBy = Automatic
+
+	column idCaixa
+		dataType: int64
+		formatString: 0
+		lineageTag: a818aea9-2bc3-441f-a3cd-097da341bbc4
+		summarizeBy: sum
+		sourceColumn: idCaixa
+
+		annotation SummarizationSetBy = Automatic
+
+	column idCentroCusto
+		dataType: int64
+		formatString: 0
+		lineageTag: 1b5a089a-dee0-4b70-ab1d-6e77386d8a37
+		summarizeBy: sum
+		sourceColumn: idCentroCusto
+
+		annotation SummarizationSetBy = Automatic
+
+	column TipoIntegracao
+		dataType: int64
+		formatString: 0
+		lineageTag: dce83f3e-e5c3-4d51-bd16-d1bf60010915
+		summarizeBy: sum
+		sourceColumn: TipoIntegracao
+
+		annotation SummarizationSetBy = Automatic
+
+	column NumeroControle
+		dataType: string
+		lineageTag: 78b63922-84b4-4aa3-bef1-a708aeb0edbd
+		summarizeBy: none
+		sourceColumn: NumeroControle
+
+		annotation SummarizationSetBy = Automatic
+
+	column CNPJRedeAdquirente
+		dataType: string
+		lineageTag: 392f0f2c-a7ec-40a2-a54f-bb7071a3e50f
+		summarizeBy: none
+		sourceColumn: CNPJRedeAdquirente
+
+		annotation SummarizationSetBy = Automatic
+
+	column CodigoBandeira
+		dataType: int64
+		formatString: 0
+		lineageTag: de378a51-8ee5-415c-8844-dde5e832b25a
+		summarizeBy: sum
+		sourceColumn: CodigoBandeira
+
+		annotation SummarizationSetBy = Automatic
+
+	column NumeroAutorizacaoRede
+		dataType: string
+		lineageTag: ac4cfb65-3d18-4638-9905-6afcdbf2da04
+		summarizeBy: none
+		sourceColumn: NumeroAutorizacaoRede
+
+		annotation SummarizationSetBy = Automatic
+
+	column BinCartao
+		dataType: string
+		lineageTag: 7f1e7e7b-97ba-46e4-8134-3eaa9fb8a89b
+		summarizeBy: none
+		sourceColumn: BinCartao
+
+		annotation SummarizationSetBy = Automatic
+
+	column DonoCartao
+		dataType: string
+		lineageTag: 9111f0f7-fb3a-4113-bb50-5d74adb35774
+		summarizeBy: none
+		sourceColumn: DonoCartao
+
+		annotation SummarizationSetBy = Automatic
+
+	column DataExpiracao
+		dataType: string
+		lineageTag: cbb70623-602b-46db-8f3c-f8bb78b3e892
+		summarizeBy: none
+		sourceColumn: DataExpiracao
+
+		annotation SummarizationSetBy = Automatic
+
+	column InstituicaoFinanceira
+		dataType: string
+		lineageTag: 66fc2458-37d6-4f53-accf-0922ce9152e5
+		summarizeBy: none
+		sourceColumn: InstituicaoFinanceira
+
+		annotation SummarizationSetBy = Automatic
+
+	column UltimosQuatroDigitos
+		dataType: string
+		lineageTag: 0170b3a5-39b7-4917-b94c-69682625f603
+		summarizeBy: none
+		sourceColumn: UltimosQuatroDigitos
+
+		annotation SummarizationSetBy = Automatic
+
+	column motivoCancelamento
+		dataType: string
+		lineageTag: 06cbb4df-43e6-4a56-8329-ebc5af96da1f
+		summarizeBy: none
+		sourceColumn: motivoCancelamento
+
+		annotation SummarizationSetBy = Automatic
+
+	column dtCancelamento
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: e7a2d6f9-bf53-4a09-a407-87080217f924
+		summarizeBy: none
+		sourceColumn: dtCancelamento
+
+		variation Variation
+			isDefault
+			relationship: 1586365b-9ae3-4bbe-9390-d4ec8d9aafb7
+			defaultHierarchy: LocalDateTable_0192bc38-4cec-4119-99d7-b800721b6540.'Hierarquia de datas'
+
+		annotation SummarizationSetBy = Automatic
+
+	column idBancoBoleto
+		dataType: int64
+		formatString: 0
+		lineageTag: 18baa9f1-60ca-44aa-9e82-49aee1d27564
+		summarizeBy: sum
+		sourceColumn: idBancoBoleto
+
+		annotation SummarizationSetBy = Automatic
+
+	column obs
+		dataType: string
+		lineageTag: b17847d7-5eda-4901-9207-7bda2602970e
+		summarizeBy: none
+		sourceColumn: obs
+
+		annotation SummarizationSetBy = Automatic
+
+	column dtUltimaAlteracao
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 3cfae6f6-5b6d-4c02-a842-98d602f394a5
+		summarizeBy: none
+		sourceColumn: dtUltimaAlteracao
+
+		variation Variation
+			isDefault
+			relationship: 82532d2a-dbc5-4a8b-881d-51d8862f967a
+			defaultHierarchy: LocalDateTable_4ed699ae-d399-4a86-976d-d6d908b4656d.'Hierarquia de datas'
+
+		annotation SummarizationSetBy = Automatic
+
+	column dtPrevisao
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: 7092c4bf-e0e6-48f4-bd74-0761501951d4
+		summarizeBy: none
+		sourceColumn: dtPrevisao
+
+		variation Variation
+			isDefault
+			relationship: a9ffe92e-5913-4f36-86c1-ca4a6dcf7128
+			defaultHierarchy: LocalDateTable_49288355-092a-4316-b776-9018362b3701.'Hierarquia de datas'
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column envioEMail
+		dataType: string
+		lineageTag: 9cd0a825-df31-4c10-836e-c298637314ef
+		summarizeBy: none
+		sourceColumn: envioEMail
+
+		annotation SummarizationSetBy = Automatic
+
+	column idMaquineta
+		dataType: int64
+		formatString: 0
+		lineageTag: d0a30f72-c53b-408f-9754-6fddc7e97fca
+		summarizeBy: sum
+		sourceColumn: idMaquineta
+
+		annotation SummarizationSetBy = Automatic
+
+	column codTipoPgLanc
+		dataType: string
+		lineageTag: f2770033-2816-45f4-b4b0-751b9a6326b9
+		summarizeBy: none
+		sourceColumn: codTipoPgLanc
+
+		annotation SummarizationSetBy = Automatic
+
+	column recusado
+		dataType: string
+		lineageTag: a3f617b7-c41a-42f1-80af-497679ab12f2
+		summarizeBy: none
+		sourceColumn: recusado
+
+		annotation SummarizationSetBy = Automatic
+
+	column numeroBoleto
+		dataType: int64
+		lineageTag: da6b9721-0283-4192-9817-4ecb2b477244
+		summarizeBy: sum
+		sourceColumn: numeroBoleto
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column dtGeracaoBoleto
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: ad10e365-09fd-4318-9817-a4561bee5194
+		summarizeBy: none
+		sourceColumn: dtGeracaoBoleto
+
+		variation Variation
+			isDefault
+			relationship: 4908b033-ea7f-4128-a687-70483492ed6f
+			defaultHierarchy: LocalDateTable_85c99f41-d95d-40c5-9b30-c47e2b7f34d4.'Hierarquia de datas'
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column idCaixaBaixa
+		dataType: int64
+		formatString: 0
+		lineageTag: 7cc6169c-bfbb-48f0-8a54-769baed59e73
+		summarizeBy: sum
+		sourceColumn: idCaixaBaixa
+
+		annotation SummarizationSetBy = Automatic
+
+	column E2eid
+		dataType: string
+		lineageTag: 9686410a-2a50-48df-8e7a-d33759f30734
+		summarizeBy: none
+		sourceColumn: E2eid
+
+		annotation SummarizationSetBy = Automatic
+
+	column TxID
+		dataType: string
+		lineageTag: 76763712-659c-4221-91c4-53a0077f414b
+		summarizeBy: none
+		sourceColumn: TxID
+
+		annotation SummarizationSetBy = Automatic
+
+	partition dim_contas_caixa = m
+		mode: import
+		source =
+				let
+				    Fonte = PowerPlatform.Dataflows(null),
+				    Workspaces = Fonte{[Id="Workspaces"]}[Data],
+				    #"3302bffe-37e3-48cf-8e61-0e1eba5f63ce" = Workspaces{[workspaceId="3302bffe-37e3-48cf-8e61-0e1eba5f63ce"]}[Data],
+				    #"0e903939-a26b-42c1-9cc2-baebc4f5b136" = #"3302bffe-37e3-48cf-8e61-0e1eba5f63ce"{[dataflowId="0e903939-a26b-42c1-9cc2-baebc4f5b136"]}[Data],
+				    dim_contas_caixa_ = #"0e903939-a26b-42c1-9cc2-baebc4f5b136"{[entity="dim_contas_caixa",version=""]}[Data]
+				in
+				    dim_contas_caixa_
+
+	annotation PBI_NavigationStepName = Navegação
+
+	annotation PBI_ResultType = Table
+

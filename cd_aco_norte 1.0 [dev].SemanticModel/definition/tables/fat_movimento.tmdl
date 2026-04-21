@@ -1,0 +1,196 @@
+table fat_movimento
+	lineageTag: aa7ecbb5-91b1-4085-84a5-92784f5ed187
+
+	measure valor = SUM(fat_movimento[vlr_total])
+		lineageTag: 60f50ec5-f51e-4115-9086-1db0ed910125
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure quantidade = SUM(fat_movimento[qtd_movimento])
+		lineageTag: 4d451807-1878-422f-af70-306f248c2cd8
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'valor unitario' = DIVIDE([valor], [quantidade])
+		formatString: "R$"\ #,0.00;-"R$"\ #,0.00;"R$"\ #,0.00
+		lineageTag: cda57c70-b110-4806-b965-ab1967782de3
+
+		annotation PBI_FormatHint = {"currencyCulture":"pt-BR"}
+
+	column dt_movimento
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: 048ef677-cb36-4b3c-ae9c-3e0482aada11
+		summarizeBy: none
+		sourceColumn: dt_movimento
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column hr_movimento
+		dataType: dateTime
+		formatString: Long Time
+		lineageTag: f8bde1b1-e0a4-4e9e-a12e-3b6c68c42694
+		summarizeBy: none
+		sourceColumn: hr_movimento
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Time
+
+	column tipo_movimento
+		dataType: string
+		lineageTag: 239c4c5f-c30e-452a-b2d1-4dc9864c0859
+		summarizeBy: none
+		sourceColumn: tipo_movimento
+
+		annotation SummarizationSetBy = Automatic
+
+	column stMov
+		dataType: string
+		lineageTag: 291f7f51-aef4-4f1f-9e4c-9ee1e08d8960
+		summarizeBy: none
+		sourceColumn: stMov
+
+		annotation SummarizationSetBy = Automatic
+
+	column finNFe
+		dataType: int64
+		formatString: 0
+		lineageTag: a80c03bc-017b-48da-a91c-c2af7b2d9387
+		summarizeBy: sum
+		sourceColumn: finNFe
+
+		annotation SummarizationSetBy = Automatic
+
+	column cd_pessoa
+		dataType: int64
+		formatString: 0
+		lineageTag: 2583222f-7852-417e-bee0-d2c3ec3a7a06
+		summarizeBy: sum
+		sourceColumn: cd_pessoa
+
+		annotation SummarizationSetBy = Automatic
+
+	column cd_produto
+		dataType: double
+		lineageTag: bdf6e146-e829-4141-9186-2136eb87c397
+		summarizeBy: sum
+		sourceColumn: cd_produto
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column qtd_movimento
+		dataType: double
+		lineageTag: 78311c6b-9ed9-42de-998b-76efd0479d71
+		summarizeBy: sum
+		sourceColumn: qtd_movimento
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column vlr_movimento
+		dataType: double
+		lineageTag: 74b2ac7a-66f0-44a5-8cc4-91f09c2b68ee
+		summarizeBy: sum
+		sourceColumn: vlr_movimento
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column vlr_ipi
+		dataType: double
+		lineageTag: 7b6885dc-753e-4562-aa68-8db0496f9e57
+		summarizeBy: sum
+		sourceColumn: vlr_ipi
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column vlr_total
+		dataType: double
+		lineageTag: 65e0660a-9937-4ebc-b541-ed439da01ecb
+		summarizeBy: sum
+		sourceColumn: vlr_total
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column numNF
+		dataType: int64
+		formatString: 0
+		lineageTag: 2ec810fc-ef00-453d-a06b-55f769a48e84
+		summarizeBy: sum
+		sourceColumn: numNF
+
+		annotation SummarizationSetBy = Automatic
+
+	column ds_sistema
+		dataType: string
+		lineageTag: 64f23aa6-d719-45ab-8d8a-536c6a82fd3c
+		summarizeBy: none
+		sourceColumn: ds_sistema
+
+		annotation SummarizationSetBy = Automatic
+
+	column id_pessoa
+		dataType: string
+		lineageTag: 88445c44-653e-4f52-af60-5c8f2367a80d
+		summarizeBy: none
+		sourceColumn: id_pessoa
+
+		annotation SummarizationSetBy = Automatic
+
+	column id_produto
+		dataType: string
+		lineageTag: 9856eccd-ced6-48ce-9212-c6902183e6bc
+		summarizeBy: none
+		sourceColumn: id_produto
+
+		annotation SummarizationSetBy = Automatic
+
+	column dt_hr_mov
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 31a0562f-7ff2-445d-94b3-d9d720b60591
+		summarizeBy: none
+		sourceColumn: dt_hr_mov
+
+		variation Variation
+			isDefault
+			relationship: a7826d05-ccad-4881-bcfd-1aa7e4cdddbe
+			defaultHierarchy: LocalDateTable_a881b74c-4f1f-484c-bba7-7af0a8ff8255.'Hierarquia de datas'
+
+		annotation SummarizationSetBy = Automatic
+
+	partition fat_movimento = m
+		mode: import
+		source =
+				let
+				    Fonte = PowerPlatform.Dataflows(null),
+				    Workspaces = Fonte{[Id="Workspaces"]}[Data],
+				    #"3302bffe-37e3-48cf-8e61-0e1eba5f63ce" = Workspaces{[workspaceId="3302bffe-37e3-48cf-8e61-0e1eba5f63ce"]}[Data],
+				    #"0e903939-a26b-42c1-9cc2-baebc4f5b136" = #"3302bffe-37e3-48cf-8e61-0e1eba5f63ce"{[dataflowId="0e903939-a26b-42c1-9cc2-baebc4f5b136"]}[Data],
+				    fat_movimento_ = #"0e903939-a26b-42c1-9cc2-baebc4f5b136"{[entity="fat_movimento",version=""]}[Data],
+				    #"Tipo Alterado" = Table.TransformColumnTypes(fat_movimento_,{{"cd_produto", Int64.Type}}),
+				    #"Personalização Adicionada" = Table.AddColumn(#"Tipo Alterado", "id_produto", each Text.From([cd_produto]) & Text.From([ds_sistema])),
+				    #"Tipo Alterado1" = Table.TransformColumnTypes(#"Personalização Adicionada",{{"dt_movimento", type date}, {"cd_produto", type number}, {"id_produto", type text}}),
+				    #"Personalização Adicionada1" = Table.AddColumn(#"Tipo Alterado1", "Text.From([cd_produto]) & Text.From([ds_sistema])Personalizar", each Text.From([dt_movimento]) & " " & Text.From([hr_movimento])),
+				    #"Colunas Renomeadas" = Table.RenameColumns(#"Personalização Adicionada1",{{"Text.From([cd_produto]) & Text.From([ds_sistema])Personalizar", "dt_hr_mov"}}),
+				    #"Tipo Alterado2" = Table.TransformColumnTypes(#"Colunas Renomeadas",{{"dt_hr_mov", type datetime}}),
+				    #"Personalização Adicionada2" = Table.AddColumn(#"Tipo Alterado2", "id_pessoa", each Text.From([cd_pessoa])&Text.From([ds_sistema])),
+				    #"Tipo Alterado3" = Table.TransformColumnTypes(#"Personalização Adicionada2",{{"id_pessoa", type text}})
+				in
+				    #"Tipo Alterado3"
+
+	annotation PBI_NavigationStepName = Navegação
+
+	annotation PBI_ResultType = Table
+

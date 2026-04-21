@@ -1,0 +1,265 @@
+table 'Produtos Convert (2)'
+	lineageTag: c36c6ddd-50fd-4d52-8c38-cf736b921a91
+
+	column Peso
+		dataType: double
+		lineageTag: 84cff34b-cc14-4506-a0c3-99d1c20ca069
+		summarizeBy: sum
+		sourceColumn: Peso
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column UndOriginal
+		dataType: string
+		lineageTag: e3e6e672-169e-4fc6-abd8-5f7c50ad5cde
+		summarizeBy: none
+		sourceColumn: UndOriginal
+
+		annotation SummarizationSetBy = Automatic
+
+	column UndFinal
+		dataType: string
+		lineageTag: 2b232f3f-28f5-44d0-a039-11058f3c0093
+		summarizeBy: none
+		sourceColumn: UndFinal
+
+		annotation SummarizationSetBy = Automatic
+
+	column ValorCompra
+		dataType: double
+		lineageTag: e97030b9-a780-49e3-b9ca-56737119ad76
+		summarizeBy: sum
+		sourceColumn: ValorCompra
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column CustoUnitário
+		dataType: double
+		lineageTag: f871a2ee-1c6a-422d-8d26-35fcf7a6c3b4
+		summarizeBy: sum
+		sourceColumn: CustoUnitário
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column CustoUnitárioConvertido
+		dataType: double
+		lineageTag: 8a727f29-1f63-43fc-a41c-8f7de0605faf
+		summarizeBy: sum
+		sourceColumn: CustoUnitárioConvertido
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column Status
+		dataType: string
+		lineageTag: e3203ca9-54e8-48f6-8e2c-f619d72bb5de
+		summarizeBy: none
+		sourceColumn: Status
+
+		annotation SummarizationSetBy = Automatic
+
+	column id_produto
+		dataType: string
+		lineageTag: 47a066f0-f650-4018-b05a-33a405683055
+		summarizeBy: none
+		sourceColumn: id_produto
+
+		annotation SummarizationSetBy = Automatic
+
+	column Mesclado
+		dataType: string
+		lineageTag: e50c446c-bfc6-4ccd-9943-5957c8f1440b
+		summarizeBy: none
+		sourceColumn: Mesclado
+
+		annotation SummarizationSetBy = Automatic
+
+	column sistema
+		dataType: string
+		lineageTag: 0d2741d4-5c55-491b-a14e-0c63ec584ad2
+		summarizeBy: none
+		sourceColumn: sistema
+
+		annotation SummarizationSetBy = Automatic
+
+	column produto
+		dataType: int64
+		formatString: 0
+		lineageTag: 9346fd96-84b0-4bee-a4f2-8059074a49a0
+		summarizeBy: sum
+		sourceColumn: produto
+
+		annotation SummarizationSetBy = Automatic
+
+	column ordem_venda
+		dataType: string
+		lineageTag: 187e04f0-b0e8-4262-9fee-c0d34cdf6f79
+		summarizeBy: none
+		sourceColumn: ordem_venda
+
+		annotation SummarizationSetBy = Automatic
+
+	column fornecedor
+		dataType: string
+		lineageTag: 14f719c6-d375-44a0-aad7-fcc0b1a75b14
+		summarizeBy: none
+		sourceColumn: fornecedor
+
+		annotation SummarizationSetBy = Automatic
+
+	column Descrição
+		dataType: string
+		lineageTag: 2139f5ef-277d-4525-97a6-89ac7db0a65d
+		summarizeBy: none
+		sourceColumn: Descrição
+
+		annotation SummarizationSetBy = Automatic
+
+	column quantidade
+		dataType: double
+		lineageTag: 0a5a3194-c8b5-4d1d-91bd-7fa0fc57fdae
+		summarizeBy: sum
+		sourceColumn: quantidade
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column qtd_convert
+		dataType: double
+		lineageTag: 76962da7-5898-4fa2-8f19-0dd6e7bcc764
+		summarizeBy: sum
+		sourceColumn: qtd_convert
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column dt_prev_recebimento
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: 5435f674-49f6-405b-b1a5-63a78ec130cd
+		summarizeBy: none
+		sourceColumn: dt_prev_recebimento
+
+		variation Variation
+			isDefault
+			relationship: fc9365f3-ac4b-4b5c-ae69-ae3a1f0e2e6f
+			defaultHierarchy: LocalDateTable_0573fd57-942e-4837-a48c-f264f0bf0f55.'Hierarquia de datas'
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column dt_pedido
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: 4af5c7e4-ccb7-46f8-ae68-73e68cb47fe4
+		summarizeBy: none
+		sourceColumn: dt_pedido
+
+		variation Variation
+			isDefault
+			relationship: e1f0e2a4-331d-4df0-a64c-a0239fc043e2
+			defaultHierarchy: LocalDateTable_60fa51f7-f004-41af-8d75-754e2aa29505.'Hierarquia de datas'
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column QuantidadeRecebida
+		dataType: string
+		lineageTag: 90fab5e6-178d-41a1-bbb4-ab4e0cda56f1
+		summarizeBy: none
+		sourceColumn: QuantidadeRecebida
+
+		annotation SummarizationSetBy = Automatic
+
+	column SaldoaReceber
+		dataType: string
+		lineageTag: ce6e86d4-6e10-4fcc-b990-baac1fceb863
+		summarizeBy: none
+		sourceColumn: SaldoaReceber
+
+		annotation SummarizationSetBy = Automatic
+
+	column DataRecebimentodoPedido
+		dataType: string
+		lineageTag: f7f8337e-3ced-454e-97d2-287b30b82ce0
+		summarizeBy: none
+		sourceColumn: DataRecebimentodoPedido
+
+		annotation SummarizationSetBy = Automatic
+
+	column ID_Espelho
+		dataType: string
+		lineageTag: e03543ce-2ece-40bb-b8e9-8f22278af1c4
+		summarizeBy: none
+		sourceColumn: ID_Espelho
+
+		annotation SummarizationSetBy = Automatic
+
+	column ID_Espelhado
+		dataType: string
+		lineageTag: 06e73b83-f0aa-461e-99f2-11d69528523b
+		summarizeBy: none
+		sourceColumn: ID_Espelhado
+
+		annotation SummarizationSetBy = Automatic
+
+	partition 'Produtos Convert (2)' = m
+		mode: import
+		source =
+				let
+				    Fonte = SharePoint.Tables("https://ypbi.sharepoint.com/sites/AcoNorte2", [Implementation=null, ApiVersion="Auto"]),
+				    #"eeff6f52-9c2f-4d52-8216-e45a9b58bddc" = Fonte{[Id="eeff6f52-9c2f-4d52-8216-e45a9b58bddc"]}[Items],
+				    #"Colunas Renomeadas" = Table.RenameColumns(#"eeff6f52-9c2f-4d52-8216-e45a9b58bddc",{{"ID", "ID.1"}}),
+				    #"Colunas Removidas" = Table.RemoveColumns(#"Colunas Renomeadas",{"FileSystemObjectType", "Id", "ServerRedirectedEmbedUri", "ServerRedirectedEmbedUrl", "ContentTypeId", "Title", "OData__ColorTag", "ComplianceAssetId"}),
+				    #"Tipo Alterado" = Table.TransformColumnTypes(#"Colunas Removidas",{{"Peso", type number}}),
+				    #"Colunas Reordenadas" = Table.ReorderColumns(#"Tipo Alterado",{"OData_﻿Sistema", "Peso", "Cód Produto", "Descrição", "Ordem de Compra", "Fornecedor", "Und Original", "Und Final", "Peso Compra", "Valor Compra", "Qtd Convert", "Custo Unitário", "Custo Unitário_x0020", "Status", "Data Prev Recebiment", "Data Pedido", "ID Produto", "Mesclado", "ID.1", "Modified", "Created", "AuthorId", "EditorId", "OData__UIVersionString", "Attachments", "GUID", "FirstUniqueAncestorSecurableObject", "RoleAssignments", "AttachmentFiles", "ContentType", "GetDlpPolicyTip", "FieldValuesAsHtml", "FieldValuesAsText", "FieldValuesForEdit", "File", "Folder", "LikedByInformation", "ParentList", "Properties", "Versions", "Author", "Editor"}),
+				    #"Colunas Renomeadas1" = Table.RenameColumns(#"Colunas Reordenadas",{{"Fornecedor", "fornecedor"}}),
+				    #"Colunas Reordenadas1" = Table.ReorderColumns(#"Colunas Renomeadas1",{"OData_﻿Sistema", "Peso", "Und Original", "Cód Produto", "Descrição", "Ordem de Compra", "fornecedor", "Und Final", "Peso Compra", "Valor Compra", "Qtd Convert", "Custo Unitário", "Custo Unitário_x0020", "Status", "Data Prev Recebiment", "Data Pedido", "ID Produto", "Mesclado", "ID.1", "Modified", "Created", "AuthorId", "EditorId", "OData__UIVersionString", "Attachments", "GUID", "FirstUniqueAncestorSecurableObject", "RoleAssignments", "AttachmentFiles", "ContentType", "GetDlpPolicyTip", "FieldValuesAsHtml", "FieldValuesAsText", "FieldValuesForEdit", "File", "Folder", "LikedByInformation", "ParentList", "Properties", "Versions", "Author", "Editor"}),
+				    #"Colunas Renomeadas2" = Table.RenameColumns(#"Colunas Reordenadas1",{{"Und Original", "UndOriginal"}}),
+				    #"Colunas Reordenadas2" = Table.ReorderColumns(#"Colunas Renomeadas2",{"OData_﻿Sistema", "Peso", "UndOriginal", "Valor Compra", "Cód Produto", "Descrição", "Ordem de Compra", "fornecedor", "Und Final", "Peso Compra", "Qtd Convert", "Custo Unitário", "Custo Unitário_x0020", "Status", "Data Prev Recebiment", "Data Pedido", "ID Produto", "Mesclado", "ID.1", "Modified", "Created", "AuthorId", "EditorId", "OData__UIVersionString", "Attachments", "GUID", "FirstUniqueAncestorSecurableObject", "RoleAssignments", "AttachmentFiles", "ContentType", "GetDlpPolicyTip", "FieldValuesAsHtml", "FieldValuesAsText", "FieldValuesForEdit", "File", "Folder", "LikedByInformation", "ParentList", "Properties", "Versions", "Author", "Editor"}),
+				    #"Colunas Renomeadas3" = Table.RenameColumns(#"Colunas Reordenadas2",{{"Valor Compra", "ValorCompra"}}),
+				    #"Tipo Alterado1" = Table.TransformColumnTypes(#"Colunas Renomeadas3",{{"UndOriginal", type text}}),
+				    #"Colunas Renomeadas4" = Table.RenameColumns(#"Tipo Alterado1",{{"Und Final", "UndFinal"}}),
+				    #"Colunas Reordenadas3" = Table.ReorderColumns(#"Colunas Renomeadas4",{"OData_﻿Sistema", "Peso", "UndOriginal", "UndFinal", "ValorCompra", "Cód Produto", "Descrição", "Ordem de Compra", "fornecedor", "Peso Compra", "Qtd Convert", "Custo Unitário", "Custo Unitário_x0020", "Status", "Data Prev Recebiment", "Data Pedido", "ID Produto", "Mesclado", "ID.1", "Modified", "Created", "AuthorId", "EditorId", "OData__UIVersionString", "Attachments", "GUID", "FirstUniqueAncestorSecurableObject", "RoleAssignments", "AttachmentFiles", "ContentType", "GetDlpPolicyTip", "FieldValuesAsHtml", "FieldValuesAsText", "FieldValuesForEdit", "File", "Folder", "LikedByInformation", "ParentList", "Properties", "Versions", "Author", "Editor"}),
+				    #"Tipo Alterado2" = Table.TransformColumnTypes(#"Colunas Reordenadas3",{{"UndFinal", type text}, {"ValorCompra", type number}}),
+				    #"Colunas Renomeadas5" = Table.RenameColumns(#"Tipo Alterado2",{{"Custo Unitário", "CustoUnitário"}}),
+				    #"Tipo Alterado3" = Table.TransformColumnTypes(#"Colunas Renomeadas5",{{"CustoUnitário", type number}}),
+				    #"Colunas Reordenadas4" = Table.ReorderColumns(#"Tipo Alterado3",{"OData_﻿Sistema", "Peso", "UndOriginal", "UndFinal", "ValorCompra", "CustoUnitário", "Cód Produto", "Descrição", "Ordem de Compra", "fornecedor", "Peso Compra", "Qtd Convert", "Custo Unitário_x0020", "Status", "Data Prev Recebiment", "Data Pedido", "ID Produto", "Mesclado", "ID.1", "Modified", "Created", "AuthorId", "EditorId", "OData__UIVersionString", "Attachments", "GUID", "FirstUniqueAncestorSecurableObject", "RoleAssignments", "AttachmentFiles", "ContentType", "GetDlpPolicyTip", "FieldValuesAsHtml", "FieldValuesAsText", "FieldValuesForEdit", "File", "Folder", "LikedByInformation", "ParentList", "Properties", "Versions", "Author", "Editor"}),
+				    #"Colunas Removidas1" = Table.RemoveColumns(#"Colunas Reordenadas4",{"ID.1", "Modified", "Created", "AuthorId", "EditorId", "OData__UIVersionString", "Attachments", "GUID", "FirstUniqueAncestorSecurableObject", "RoleAssignments", "AttachmentFiles", "ContentType", "GetDlpPolicyTip", "FieldValuesAsHtml", "FieldValuesAsText", "FieldValuesForEdit", "File", "Folder", "LikedByInformation", "ParentList", "Properties", "Versions", "Author", "Editor"}),
+				    #"Colunas Renomeadas6" = Table.RenameColumns(#"Colunas Removidas1",{{"OData_﻿Sistema", "sistema"}}),
+				    #"Tipo Alterado4" = Table.TransformColumnTypes(#"Colunas Renomeadas6",{{"sistema", type text}}),
+				    #"Colunas Reordenadas5" = Table.ReorderColumns(#"Tipo Alterado4",{"Peso", "UndOriginal", "UndFinal", "ValorCompra", "CustoUnitário", "Cód Produto", "Descrição", "Ordem de Compra", "sistema", "fornecedor", "Peso Compra", "Qtd Convert", "Custo Unitário_x0020", "Status", "Data Prev Recebiment", "Data Pedido", "ID Produto", "Mesclado"}),
+				    #"Personalização Adicionada" = Table.AddColumn(#"Colunas Reordenadas5", "CustoUnitárioConvertido", each [ValorCompra]/[Qtd Convert]),
+				    #"Tipo Alterado5" = Table.TransformColumnTypes(#"Personalização Adicionada",{{"CustoUnitárioConvertido", type number}, {"Status", type text}}),
+				    #"Colunas Renomeadas7" = Table.RenameColumns(#"Tipo Alterado5",{{"Cód Produto", "produto"}}),
+				    #"Tipo Alterado6" = Table.TransformColumnTypes(#"Colunas Renomeadas7",{{"produto", Int64.Type}}),
+				    #"Personalização Adicionada1" = Table.AddColumn(#"Tipo Alterado6", "id_produto", each Text.From([produto]) & Text.From([sistema])),
+				    #"Colunas Removidas2" = Table.RemoveColumns(#"Personalização Adicionada1",{"ID Produto"}),
+				    #"Valor Substituído" = Table.ReplaceValue(#"Colunas Removidas2"," ","",Replacer.ReplaceText,{"Mesclado"}),
+				    #"Colunas Reordenadas6" = Table.ReorderColumns(#"Valor Substituído",{"Peso", "UndOriginal", "UndFinal", "ValorCompra", "CustoUnitário", "CustoUnitárioConvertido", "Status", "id_produto", "Mesclado", "sistema", "produto", "Descrição", "Ordem de Compra", "fornecedor", "Peso Compra", "Qtd Convert", "Custo Unitário_x0020", "Data Prev Recebiment", "Data Pedido"}),
+				    #"Colunas Renomeadas8" = Table.RenameColumns(#"Colunas Reordenadas6",{{"Ordem de Compra", "ordem_venda"}}),
+				    #"Colunas Reordenadas7" = Table.ReorderColumns(#"Colunas Renomeadas8",{"Peso", "UndOriginal", "UndFinal", "ValorCompra", "CustoUnitário", "CustoUnitárioConvertido", "Status", "id_produto", "Mesclado", "sistema", "produto", "ordem_venda", "fornecedor", "Descrição", "Peso Compra", "Qtd Convert", "Custo Unitário_x0020", "Data Prev Recebiment", "Data Pedido"}),
+				    #"Tipo Alterado7" = Table.TransformColumnTypes(#"Colunas Reordenadas7",{{"ordem_venda", type text}, {"fornecedor", type text}, {"id_produto", type text}}),
+				    #"Colunas Renomeadas9" = Table.RenameColumns(#"Tipo Alterado7",{{"Peso Compra", "quantidade"}, {"Qtd Convert", "qtd_convert"}}),
+				    #"Tipo Alterado8" = Table.TransformColumnTypes(#"Colunas Renomeadas9",{{"Descrição", type text}, {"quantidade", type number}, {"qtd_convert", type number}}),
+				    #"Colunas Renomeadas10" = Table.RenameColumns(#"Tipo Alterado8",{{"Data Pedido", "dt_pedido"}, {"Data Prev Recebiment", "dt_prev_recebimento"}}),
+				    #"Tipo Alterado9" = Table.TransformColumnTypes(#"Colunas Renomeadas10",{{"dt_pedido", type date}, {"dt_prev_recebimento", type date}}),
+				    #"Colunas Removidas3" = Table.RemoveColumns(#"Tipo Alterado9",{"Custo Unitário_x0020"})
+				in
+				    #"Colunas Removidas3"
+
+	annotation PBI_NavigationStepName = Navegação
+
+	annotation PBI_ResultType = Table
+

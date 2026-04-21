@@ -1,0 +1,26 @@
+table par_percent_margem
+	lineageTag: 67ff7597-7f22-473b-bfc6-9b3aeb107c7d
+
+	measure 'Valor par_percent_margem' = SELECTEDVALUE('par_percent_margem'[par_percent_margem])
+		formatString: 0
+		lineageTag: 6febb21b-be78-4fc1-8149-a7a16dd3f26d
+
+	column par_percent_margem
+		formatString: 0%;-0%;0%
+		lineageTag: f3fef50c-354b-4efb-976d-c39397d05d68
+		summarizeBy: none
+		sourceColumn: [Value]
+
+		extendedProperty ParameterMetadata =
+				{
+				  "version": 0
+				}
+
+		annotation SummarizationSetBy = User
+
+	partition par_percent_margem = calculated
+		mode: import
+		source = GENERATESERIES(0.00, 1 ,0.01)
+
+	annotation PBI_Id = 69448d53211042849e3d8f91888d445b
+

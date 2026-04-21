@@ -1,0 +1,51 @@
+table Parâmetro
+	lineageTag: 397c2634-d419-4e4c-be25-0b2b470612bc
+
+	column Parâmetro
+		lineageTag: c3645606-a12d-4941-bda4-bc914347453c
+		summarizeBy: none
+		sourceColumn: [Value1]
+		sortByColumn: 'Parâmetro Pedido'
+
+		relatedColumnDetails
+			groupByColumn: 'Parâmetro Campos'
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Parâmetro Campos'
+		isHidden
+		lineageTag: 9721e50e-7bf8-40e6-8fa7-1b07ac21523f
+		summarizeBy: none
+		sourceColumn: [Value2]
+		sortByColumn: 'Parâmetro Pedido'
+
+		extendedProperty ParameterMetadata =
+				{
+				  "version": 3,
+				  "kind": 2
+				}
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Parâmetro Pedido'
+		isHidden
+		formatString: 0
+		lineageTag: e96e5f8f-b821-4e19-b8f3-a571a3ff5b93
+		summarizeBy: sum
+		sourceColumn: [Value3]
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Parâmetro = calculated
+		mode: import
+		source =
+				{
+				    ("Preco Compra", NAMEOF('Medidas'[max_preco_compra]), 0),
+				    ("Preco Venda", NAMEOF('Medidas'[max_preco_venda]), 1),
+				    ("Saldo Estoque", NAMEOF('Medidas'[saldo_estoque_all]), 2),
+				    ("Margem Estoque", NAMEOF('Medidas'[%_margem_estoque]), 3),
+				    ("Valor em estoque", NAMEOF('Medidas'[vlr_estoque]),4)
+				}
+
+	annotation PBI_Id = 56485a3bff204d73b958266b4b8e82dc
+

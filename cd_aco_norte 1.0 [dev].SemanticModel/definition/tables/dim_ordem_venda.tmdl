@@ -1,0 +1,23 @@
+table dim_ordem_venda
+	lineageTag: da81b743-c935-436e-bcd0-9e1d376d18dd
+
+	column ordem_venda
+		lineageTag: 3c9dec54-0a43-4971-adf0-4dc0bad2a68f
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: Produtos Convert[ordem_venda]
+
+		annotation SummarizationSetBy = Automatic
+
+	partition dim_ordem_venda = calculated
+		mode: import
+		source =
+				
+				SUMMARIZE(
+				    FILTER(
+				        'Produtos Convert' ,
+				        'Produtos Convert'[ordem_venda] <> BLANK()) ,
+				    'Produtos Convert'[ordem_venda])
+
+	annotation PBI_Id = 965fac65dcfe4f7f9cc228c9d8552082
+

@@ -1,0 +1,34 @@
+table par_qtd_estoque
+	lineageTag: aeb0f093-1ac0-4e20-9ef9-137ac9b25c44
+
+	measure 'Valor par_qtd_estoque' = SELECTEDVALUE('par_qtd_estoque'[par_qtd_estoque])
+		formatString: 0
+		lineageTag: 1b1fc6f3-df5c-44ba-81f3-22b9e3e9c168
+
+	column par_qtd_estoque
+		dataType: int64
+		formatString: 0
+		lineageTag: 1dbcb600-b4ea-44fe-8b37-a561ea55f646
+		summarizeBy: sum
+		sourceColumn: [Value]
+
+		extendedProperty ParameterMetadata =
+				{
+				  "version": 0
+				}
+
+		annotation SummarizationSetBy = Automatic
+
+	column text = par_qtd_estoque[par_qtd_estoque]
+		dataType: string
+		lineageTag: 92417b84-d252-4920-83b9-4ffec28171b2
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	partition par_qtd_estoque-acd93d61-2454-4def-b3dd-ebbdaa493d10 = calculated
+		mode: import
+		source = GENERATESERIES(0, 10000 , 1)
+
+	annotation PBI_Id = 6293fecc4f4249bc8ecc5e1ed93051bf
+

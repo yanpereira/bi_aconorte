@@ -1,0 +1,227 @@
+relationship c7f0f01d-f6cd-493d-8202-aeff34538866
+	joinOnDateBehavior: datePartOnly
+	fromColumn: par_atualizacao.dt_hr_atualizacao
+	toColumn: LocalDateTable_33d01945-020f-4be8-a507-3a2621b35d57.Date
+
+relationship 7dfa228c-9be9-42c7-90ef-e9954000b98a
+	joinOnDateBehavior: datePartOnly
+	fromColumn: dim_calendario.Data
+	toColumn: LocalDateTable_731e28b6-b81b-4f0c-a153-adbe1f92fcde.Date
+
+relationship 5f1a9aa6-84fc-4f61-8143-89706e8e1cfc
+	fromColumn: Metas.Data
+	toColumn: dim_calendario.Data
+
+relationship 77f14f6b-b83e-462f-a39b-68be8fbcb718
+	joinOnDateBehavior: datePartOnly
+	fromColumn: dim_contas_caixa.dtLancamento
+	toColumn: LocalDateTable_5b9ee7e7-179e-425f-a14f-d299d1f72e4c.Date
+
+relationship e73035b1-78f6-4bb4-84a8-43b7db097b33
+	joinOnDateBehavior: datePartOnly
+	fromColumn: dim_contas_caixa.dtVencimento
+	toColumn: LocalDateTable_906242b9-1820-41ee-a0bb-02db02e81857.Date
+
+relationship 5755f316-2524-493c-ab9a-f04ebfa86030
+	joinOnDateBehavior: datePartOnly
+	fromColumn: dim_contas_caixa.dtBaixa
+	toColumn: LocalDateTable_35282be8-4c31-44f3-bbe8-5a91cd2e327f.Date
+
+relationship ba9ab8ce-1eec-427c-8c5c-c37e0172e906
+	joinOnDateBehavior: datePartOnly
+	fromColumn: dim_contas_caixa.dtExtorno
+	toColumn: LocalDateTable_711d66bd-71df-48db-b81d-999970e43440.Date
+
+relationship 1586365b-9ae3-4bbe-9390-d4ec8d9aafb7
+	joinOnDateBehavior: datePartOnly
+	fromColumn: dim_contas_caixa.dtCancelamento
+	toColumn: LocalDateTable_0192bc38-4cec-4119-99d7-b800721b6540.Date
+
+relationship 82532d2a-dbc5-4a8b-881d-51d8862f967a
+	joinOnDateBehavior: datePartOnly
+	fromColumn: dim_contas_caixa.dtUltimaAlteracao
+	toColumn: LocalDateTable_4ed699ae-d399-4a86-976d-d6d908b4656d.Date
+
+relationship a9ffe92e-5913-4f36-86c1-ca4a6dcf7128
+	joinOnDateBehavior: datePartOnly
+	fromColumn: dim_contas_caixa.dtPrevisao
+	toColumn: LocalDateTable_49288355-092a-4316-b776-9018362b3701.Date
+
+relationship 4908b033-ea7f-4128-a687-70483492ed6f
+	joinOnDateBehavior: datePartOnly
+	fromColumn: dim_contas_caixa.dtGeracaoBoleto
+	toColumn: LocalDateTable_85c99f41-d95d-40c5-9b30-c47e2b7f34d4.Date
+
+relationship 983845a4-62e2-4a8e-8d73-e8d14faf16f2
+	joinOnDateBehavior: datePartOnly
+	fromColumn: fat_livro_caixa.dt_lancamento
+	toColumn: LocalDateTable_57b29106-cb59-4718-be77-613157c03e65.Date
+
+relationship 82e15716-9a23-480f-9775-9bbce4624b76
+	joinOnDateBehavior: datePartOnly
+	fromColumn: fat_livro_caixa.dt_hr_lancamento
+	toColumn: LocalDateTable_b3415495-e46c-4d04-9cfb-d06b6509e6ba.Date
+
+relationship 7a0c6294-c28a-438c-8985-eb698f19b059
+	joinOnDateBehavior: datePartOnly
+	fromColumn: fat_estoques.alterado
+	toColumn: LocalDateTable_4ce980c7-6375-40bc-a2a2-3ad23d362995.Date
+
+relationship AutoDetected_48eb5495-42a2-47ca-aa85-94a138761d75
+	crossFilteringBehavior: bothDirections
+	fromCardinality: one
+	fromColumn: fat_estoques.id_produto
+	toColumn: dim_produtos.id_produto
+
+relationship AutoDetected_f3b5a6e7-1fdb-42db-b619-c2f52f99e13d
+	fromColumn: fat_movimento.id_produto
+	toColumn: dim_produtos.id_produto
+
+relationship AutoDetected_66cc5a5d-1bcc-4642-bdd2-2c35fd460358
+	fromColumn: fat_vendas.id_produto
+	toColumn: dim_produtos.id_produto
+
+relationship AutoDetected_a5be01b6-efb4-4841-87c1-bd42e80131ed
+	fromColumn: dim_contas_caixa.codTipoPg
+	toColumn: dim_tipo_pg.codTipoPg
+
+relationship 8d1ab68c-86a9-43ef-bd22-8a806f48e913
+	joinOnDateBehavior: datePartOnly
+	fromColumn: dim_produtos.dt_ultima_entrada
+	toColumn: LocalDateTable_f0527294-4761-4457-a512-60eb1aa827c5.Date
+
+relationship 52985eea-18bc-446d-b113-c62f874361a9
+	joinOnDateBehavior: datePartOnly
+	fromColumn: dim_produtos.dt_ultima_venda
+	toColumn: LocalDateTable_c7c1506d-3c02-4d56-9bb3-2827af3d5ca9.Date
+
+relationship 7c23ef2c-5307-951d-81b5-442f42bf855d
+	fromColumn: fat_vendas.ds_sistema
+	toColumn: dim_sistema.ds_sistema
+
+relationship 025cec03-c131-c8fc-45d4-10f4df30df35
+	fromColumn: fat_vendas.id_cliente
+	toColumn: dim_pessoas.id_pessoa
+
+relationship be5e87bd-2ef9-db17-3d7c-afc0126479eb
+	fromColumn: fat_vendas.id_vendedor
+	toColumn: dim_vendedores.id_pessoa
+
+relationship 503e1a33-3401-4983-981b-947e8bee1c73
+	joinOnDateBehavior: datePartOnly
+	fromColumn: fat_vendas.dt_hr_venda
+	toColumn: LocalDateTable_2fc1c74e-0907-4687-b98e-60cb264ba7fc.Date
+
+relationship a06362b9-9fb3-f36a-12c7-6fdc79e6ef1d
+	fromColumn: fat_vendas.dt_venda
+	toColumn: dim_calendario.Data
+
+relationship AutoDetected_5405ab8c-cb52-452b-937b-5496ea656c88
+	fromColumn: fat_vendas.idPlanoVenda
+	toColumn: dim_planos.idPlanoVenda
+
+relationship AutoDetected_8ddcff6a-aaa2-4ff8-a4ed-a5d280ad4cb6
+	fromColumn: 'Produtos Convert'.id_produto
+	toColumn: dim_produtos.id_produto
+
+relationship ab4a566c-7ee1-213a-4dc6-86d608f0ee31
+	fromColumn: 'Produtos Convert'.status
+	toColumn: dim_status.status
+
+relationship 1b0aca12-b828-4db9-9584-8cb046daa665
+	joinOnDateBehavior: datePartOnly
+	fromColumn: fat_vendas_cancel.dt_hr_venda_cancel
+	toColumn: LocalDateTable_1676c5a6-2f1a-488d-9e01-127b0094acb7.Date
+
+relationship AutoDetected_f90ee68e-48b1-4e2d-8023-525bdc3b19f8
+	fromColumn: fat_vendas_cancel.id_produto
+	toColumn: dim_produtos.id_produto
+
+relationship AutoDetected_e35c5729-7623-4804-a481-35f8b9e76454
+	fromColumn: fat_vendas_cancel.idPlanoVenda
+	toColumn: dim_planos.idPlanoVenda
+
+relationship 07a48754-1efd-f4eb-23df-aee14039eee2
+	fromColumn: fat_vendas_cancel.id_vendedor
+	toColumn: dim_vendedores.id_pessoa
+
+relationship ebce1a65-cd83-0c9b-7535-98afef211be5
+	fromColumn: fat_vendas_cancel.id_cliente
+	toColumn: dim_pessoas.id_pessoa
+
+relationship a7826d05-ccad-4881-bcfd-1aa7e4cdddbe
+	joinOnDateBehavior: datePartOnly
+	fromColumn: fat_movimento.dt_hr_mov
+	toColumn: LocalDateTable_a881b74c-4f1f-484c-bba7-7af0a8ff8255.Date
+
+relationship fc9365f3-ac4b-4b5c-ae69-ae3a1f0e2e6f
+	joinOnDateBehavior: datePartOnly
+	fromColumn: 'Produtos Convert (2)'.dt_prev_recebimento
+	toColumn: LocalDateTable_0573fd57-942e-4837-a48c-f264f0bf0f55.Date
+
+relationship e1f0e2a4-331d-4df0-a64c-a0239fc043e2
+	joinOnDateBehavior: datePartOnly
+	fromColumn: 'Produtos Convert (2)'.dt_pedido
+	toColumn: LocalDateTable_60fa51f7-f004-41af-8d75-754e2aa29505.Date
+
+relationship 91b51797-63ff-4ccf-936c-d9ad54c37de6
+	joinOnDateBehavior: datePartOnly
+	fromColumn: 'Produtos Convert'.dt_prev_recebimento
+	toColumn: LocalDateTable_70ca9f36-df9d-489f-b40a-7bef05cef57e.Date
+
+relationship AutoDetected_7666275a-6688-473b-916e-3afb8471a83e
+	fromColumn: 'Produtos Convert (2)'.id_produto
+	toColumn: fat_estoques.id_produto
+
+relationship eff98b46-0332-3f23-d7e2-a199365b2a59
+	fromColumn: 'Produtos Convert'.ordem_venda
+	toColumn: dim_ordem_venda.ordem_venda
+
+relationship 75b66e16-e22b-79e1-7f3c-3496dd49c84f
+	fromColumn: 'Produtos Convert'.dt_pedido
+	toColumn: dim_calendario.Data
+
+relationship 81077511-079f-4c84-8304-1fc1438319fa
+	joinOnDateBehavior: datePartOnly
+	fromColumn: fat_caixa.dtLancamento
+	toColumn: LocalDateTable_ab124baa-5cbf-427d-b89e-a80d47501b19.Date
+
+relationship 2273492f-4a81-41f7-ba70-586fe225af73
+	joinOnDateBehavior: datePartOnly
+	fromColumn: fat_caixa.dtBaixa
+	toColumn: LocalDateTable_af7b44c8-51c6-4b15-82e1-271e6a2dfc8f.Date
+
+relationship AutoDetected_57dba40f-87aa-4e6d-9cc3-ea4fffbb2930
+	fromColumn: fat_caixa.codTipoPg
+	toColumn: dim_tipo_pg.codTipoPg
+
+relationship f7c819b9-e0b7-aefe-826a-7b0592a6c725
+	fromColumn: fat_caixa.ds_sistema
+	toColumn: dim_sistema.ds_sistema
+
+relationship a06b3eb1-6a88-d05b-6e3b-55b44edbbd32
+	fromColumn: fat_caixa.id_pessoa
+	toColumn: dim_pessoas.id_pessoa
+
+relationship 69546268-1607-41b3-22c6-953fe037bdfc
+	fromColumn: fat_movimento.dt_movimento
+	toColumn: dim_calendario.Data
+
+relationship 584fd3a3-feee-4597-9a99-33d93863f6e0
+	joinOnDateBehavior: datePartOnly
+	fromColumn: 'Produtos Convert'.DataRecebimentodoPedido
+	toColumn: LocalDateTable_72195b58-743f-4cb9-8e19-e40505c2a90f.Date
+
+relationship be3553b8-5c0d-e7ea-a902-25a1f5ad8173
+	fromColumn: fat_caixa.dtVencimento
+	toColumn: dim_calendario.Data
+
+relationship e3a8e314-a635-4382-8129-9f1052c8285e
+	joinOnDateBehavior: datePartOnly
+	fromColumn: fat_vendas_cancel.dt_venda
+	toColumn: LocalDateTable_c82f1351-181d-471a-b663-fe067f5da03f.Date
+
+relationship 098df97b-88bb-f074-4704-0526ebf57e53
+	fromColumn: fat_vendas_cancel.dt_cancel
+	toColumn: dim_calendario.Data
+

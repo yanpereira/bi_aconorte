@@ -1,0 +1,197 @@
+table dim_calendario
+	lineageTag: 23f017a1-67ec-4ebc-a40d-49ec10193e28
+
+	column Data
+		formatString: Short Date
+		lineageTag: c26d69ce-7994-42b0-8e55-8d5222c5770e
+		summarizeBy: none
+		sourceColumn: [Date]
+
+		variation Variation
+			isDefault
+			relationship: 7dfa228c-9be9-42c7-90ef-e9954000b98a
+			defaultHierarchy: LocalDateTable_731e28b6-b81b-4f0c-a153-adbe1f92fcde.'Hierarquia de datas'
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column Dia
+		formatString: 0
+		lineageTag: d458b4d8-21c8-4b4c-a14c-29d1619d10f4
+		summarizeBy: sum
+		isNameInferred
+		sourceColumn: [Dia]
+
+		annotation SummarizationSetBy = Automatic
+
+	column Mês
+		lineageTag: bd8d5a10-5c89-448f-a3cf-55b124af0027
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [Mês]
+		sortByColumn: 'Nº Mês'
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Mês Abrev'
+		lineageTag: 856f84d4-92f9-4fe0-a8f0-ce64f9dc5d56
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [Mês Abrev]
+		sortByColumn: 'Nº Mês'
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Nº Mês'
+		formatString: 0
+		lineageTag: da663fca-a418-442d-867f-0eba6426bfc9
+		summarizeBy: sum
+		isNameInferred
+		sourceColumn: [Nº Mês]
+
+		annotation SummarizationSetBy = Automatic
+
+	column Ano
+		formatString: 0
+		lineageTag: ad423ef1-e185-468f-b370-b9c2583be00a
+		summarizeBy: sum
+		isNameInferred
+		sourceColumn: [Ano]
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Dia Semana'
+		lineageTag: 54d17595-cf87-4aa5-a1b5-fea0e24a8652
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [Dia Semana]
+		sortByColumn: 'Nº Dia Semana'
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Nº Dia Semana'
+		formatString: 0
+		lineageTag: 6c522dae-1bbe-450d-8c7e-a56c3788ad62
+		summarizeBy: sum
+		isNameInferred
+		sourceColumn: [Nº Dia Semana]
+
+		annotation SummarizationSetBy = Automatic
+
+	column Anomes
+		lineageTag: e32de409-b633-4b49-bdfe-350bc2c933b9
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [Anomes]
+
+		annotation SummarizationSetBy = Automatic
+
+	column Mês/Ano
+		lineageTag: ceaa4e5a-b666-460f-a062-209e9fc4e863
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [Mês/Ano]
+		sortByColumn: Anomes
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Semana Mês'
+		formatString: 0
+		lineageTag: 4b6f2261-ce61-484d-b711-9d2aed246fb3
+		summarizeBy: sum
+		isNameInferred
+		sourceColumn: [Semana Mês]
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Semana Ano'
+		formatString: 0
+		lineageTag: 477983d9-5f7d-4056-9195-bbc6de274433
+		summarizeBy: sum
+		isNameInferred
+		sourceColumn: [Semana Ano]
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Últimos Meses'
+		formatString: 0
+		lineageTag: 514a70f4-b372-4399-89f9-3919ce85d884
+		summarizeBy: sum
+		isNameInferred
+		sourceColumn: [Últimos Meses]
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Últimos Dias'
+		formatString: 0
+		lineageTag: ae74cdb6-9eb0-4149-a437-7c7947a8750b
+		summarizeBy: sum
+		isNameInferred
+		sourceColumn: [Últimos Dias]
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Dia ùtil'
+		lineageTag: 5b34a52b-dfcc-417e-9461-e146e623712a
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [Dia ùtil]
+
+		annotation SummarizationSetBy = Automatic
+
+	partition dim_calendario-ca82f879-aeac-4f03-a8ba-3c6339382f90 = calculated
+		mode: import
+		source =
+				
+				var datainicio =
+				MIN(
+				    fat_vendas[dt_venda])
+				
+				var datafim =
+				MAX(
+				    fat_vendas[dt_venda])
+				
+				var datas =
+				CALENDAR(
+				    DATE(
+				        YEAR(
+				            datainicio) ,
+				        1 , 1) ,
+				    DATE(
+				        YEAR(
+				            datafim) ,
+				        12 , 31))
+				return
+				ADDCOLUMNS(
+				    datas ,
+				    "Dia" , DAY([Date]) ,
+				    "Mês" , FORMAT([Date] , "mmmm") ,
+				    "Mês Abrev" , FORMAT([Date] , "mmm") ,
+				    "Nº Mês" , MONTH([Date]) ,
+				    "Ano" , YEAR([Date]) ,
+				    "Dia Semana" , FORMAT([Date] , "dddd") ,
+				    "Nº Dia Semana" , WEEKDAY([Date] , 1) ,
+				    "Anomes" , FORMAT([Date] , "yyyymm") ,
+				    "Mês/Ano" , FORMAT([Date] , "mmm/yy") ,
+				    "Últimos Meses" , DATEDIFF([Date] , TODAY() , MONTH) ,
+				    "Últimos Dias" , DATEDIFF([Date] , TODAY() , DAY) ,
+				    "Semana Mês" ,
+				    WEEKNUM([Date]) -
+				    WEEKNUM(
+				        DATE(
+				            YEAR(
+				                [Date]) ,
+				            MONTH(
+				                [Date]) , 1)) + 1 ,
+				    "Semana Ano" ,
+				    WEEKNUM(
+				        [Date]) ,
+				    "Dia ùtil" ,
+				    IF(
+				        WEEKDAY([Date] , 1) > 1 &&
+				        WEEKDAY([Date] , 1) < 7 ,
+				        "S" , "N"))
+
+	annotation PBI_Id = da57c67c691040f5bce23f71ba64e8d7
+

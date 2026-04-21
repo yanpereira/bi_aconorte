@@ -1,0 +1,11 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "Report",
+    "displayName": "cd_aco_norte 1.0 [dev]"
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "10d5cab1-ef89-40ef-b76b-ecfc4875dd6e"
+  }
+}

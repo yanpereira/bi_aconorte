@@ -1,0 +1,209 @@
+table fat_vendas_cancel
+	lineageTag: bf880922-868a-463b-b83d-ba617ac5ebcd
+
+	column cd_venda
+		dataType: double
+		lineageTag: 72c2f2c0-def6-42cc-8e51-372fe9310280
+		summarizeBy: sum
+		sourceColumn: cd_venda
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column dt_venda
+		dataType: dateTime
+		formatString: Short Date
+		lineageTag: c82c6411-cd74-4e1c-9852-a6d40823ac98
+		summarizeBy: none
+		sourceColumn: dt_venda
+
+		variation Variação
+			isDefault
+			relationship: e3a8e314-a635-4382-8129-9f1052c8285e
+			defaultHierarchy: LocalDateTable_c82f1351-181d-471a-b663-fe067f5da03f.'Hierarquia de datas'
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column hr_vendas
+		dataType: dateTime
+		formatString: Long Time
+		lineageTag: 4bab9daa-c127-4736-a0b9-8d759966bbc6
+		summarizeBy: none
+		sourceColumn: hr_vendas
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Time
+
+	column dt_cancel
+		dataType: dateTime
+		formatString: Short Date
+		lineageTag: 0fdfe722-bd6d-46c6-8d47-7fc2b4b31533
+		summarizeBy: none
+		sourceColumn: dt_cancel
+
+		changedProperty = DataType
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column cd_vendedor
+		dataType: int64
+		formatString: 0
+		lineageTag: 39754804-b549-4cda-90c1-0013af750670
+		summarizeBy: sum
+		sourceColumn: cd_vendedor
+
+		annotation SummarizationSetBy = Automatic
+
+	column cd_cliente
+		dataType: int64
+		formatString: 0
+		lineageTag: 42500471-51d3-462f-9671-f45635423528
+		summarizeBy: sum
+		sourceColumn: cd_cliente
+
+		annotation SummarizationSetBy = Automatic
+
+	column idPlanoVenda
+		dataType: int64
+		formatString: 0
+		lineageTag: 078d0722-fdec-403e-9e36-da27c726775a
+		summarizeBy: none
+		sourceColumn: idPlanoVenda
+
+		annotation SummarizationSetBy = Automatic
+
+	column cd_produto
+		dataType: double
+		lineageTag: d0796a11-1f65-41e4-8c53-4ff1553be0a6
+		summarizeBy: sum
+		sourceColumn: cd_produto
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column qtd_venda
+		dataType: double
+		lineageTag: eda6054a-47ae-449f-b4bb-2922cd2aa0b8
+		summarizeBy: sum
+		sourceColumn: qtd_venda
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column vlr_custo
+		dataType: double
+		lineageTag: 83e46413-3409-4a5a-bc9d-e79311c66d64
+		summarizeBy: sum
+		sourceColumn: vlr_custo
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column vlr_venda
+		dataType: double
+		lineageTag: a46fca81-307d-4c20-809b-d80252005a36
+		summarizeBy: sum
+		sourceColumn: vlr_venda
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column vlr_desconto
+		dataType: double
+		lineageTag: 71cfcfa3-d6e9-401a-be03-d5f4c35760b5
+		summarizeBy: sum
+		sourceColumn: vlr_desconto
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column vlr_venda_total
+		dataType: double
+		lineageTag: f0db0b57-96be-48b1-bfc4-48c99702a768
+		summarizeBy: sum
+		sourceColumn: vlr_venda_total
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column ds_sistema
+		dataType: string
+		lineageTag: d0c54fa9-9cff-4f1d-bdea-39db6a5bee2b
+		summarizeBy: none
+		sourceColumn: ds_sistema
+
+		annotation SummarizationSetBy = Automatic
+
+	column dt_hr_venda_cancel
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 3c5ba44b-a3d2-483f-8683-717b567c741e
+		summarizeBy: none
+		sourceColumn: dt_hr_venda_cancel
+
+		variation Variation
+			isDefault
+			relationship: 1b0aca12-b828-4db9-9584-8cb046daa665
+			defaultHierarchy: LocalDateTable_1676c5a6-2f1a-488d-9e01-127b0094acb7.'Hierarquia de datas'
+
+		annotation SummarizationSetBy = Automatic
+
+	column id_vendedor
+		dataType: string
+		lineageTag: fa6de201-cf4a-47d8-a53f-38131f117939
+		summarizeBy: none
+		sourceColumn: id_vendedor
+
+		annotation SummarizationSetBy = Automatic
+
+	column id_cliente
+		dataType: string
+		lineageTag: d9f34959-cad9-4a4b-9475-da8e9bde89f3
+		summarizeBy: none
+		sourceColumn: id_cliente
+
+		annotation SummarizationSetBy = Automatic
+
+	column id_produto
+		dataType: string
+		lineageTag: 8ee2295b-ba51-4605-95b6-8d190a5c756e
+		summarizeBy: none
+		sourceColumn: id_produto
+
+		annotation SummarizationSetBy = Automatic
+
+	partition fat_vendas_cancel = m
+		mode: import
+		source =
+				let
+				    Fonte = PowerPlatform.Dataflows(null),
+				    Workspaces = Fonte{[Id="Workspaces"]}[Data],
+				    #"3302bffe-37e3-48cf-8e61-0e1eba5f63ce" = Workspaces{[workspaceId="3302bffe-37e3-48cf-8e61-0e1eba5f63ce"]}[Data],
+				    #"0e903939-a26b-42c1-9cc2-baebc4f5b136" = #"3302bffe-37e3-48cf-8e61-0e1eba5f63ce"{[dataflowId="0e903939-a26b-42c1-9cc2-baebc4f5b136"]}[Data],
+				    fat_vendas_canceladas_ = #"0e903939-a26b-42c1-9cc2-baebc4f5b136"{[entity="fat_vendas_canceladas",version=""]}[Data],
+				    #"Tipo Alterado" = Table.TransformColumnTypes(fat_vendas_canceladas_,{{"dt_venda", type date}}),
+				    #"Personalização Adicionada" = Table.AddColumn(#"Tipo Alterado", "dt_hr_venda_cancel", each Text.From([dt_venda]) & " " & Text.From([hr_vendas])),
+				    #"Tipo Alterado1" = Table.TransformColumnTypes(#"Personalização Adicionada",{{"dt_hr_venda_cancel", type datetime}}),
+				    #"Personalização Adicionada1" = Table.AddColumn(#"Tipo Alterado1", "id_vendedor", each Text.From([cd_vendedor]) & Text.From([ds_sistema])),
+				    #"Personalização Adicionada2" = Table.AddColumn(#"Personalização Adicionada1", "id_cliente", each Text.From([cd_cliente]) & Text.From([ds_sistema])),
+				    #"Personalização Adicionada3" = Table.AddColumn(#"Personalização Adicionada2", "id_produto", each Text.From([cd_produto]) & Text.From([ds_sistema])),
+				    #"Tipo Alterado2" = Table.TransformColumnTypes(#"Personalização Adicionada3",{{"id_produto", type text}, {"id_cliente", type text}, {"id_vendedor", type text}})
+				in
+				    #"Tipo Alterado2"
+
+	annotation PBI_NavigationStepName = Navegação
+
+	annotation PBI_ResultType = Table
+

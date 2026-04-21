@@ -1,0 +1,55 @@
+table 'Parâmetro vendas'
+	lineageTag: 41d096d2-03e3-4cc8-a4f2-6a5a1c7f2651
+
+	column 'Parâmetro vendas'
+		lineageTag: a387b3a1-23ca-49e5-a4b6-3615eec8066f
+		summarizeBy: none
+		sourceColumn: [Value1]
+		sortByColumn: 'Parâmetro vendas Pedido'
+
+		relatedColumnDetails
+			groupByColumn: 'Parâmetro vendas Campos'
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Parâmetro vendas Campos'
+		isHidden
+		lineageTag: f4f56b19-9ead-45bc-b1ce-b197167ae6a7
+		summarizeBy: none
+		sourceColumn: [Value2]
+		sortByColumn: 'Parâmetro vendas Pedido'
+
+		extendedProperty ParameterMetadata =
+				{
+				  "version": 3,
+				  "kind": 2
+				}
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Parâmetro vendas Pedido'
+		isHidden
+		formatString: 0
+		lineageTag: f2d27c33-709e-4dc7-818b-c4c770a5cb6e
+		summarizeBy: sum
+		sourceColumn: [Value3]
+
+		annotation SummarizationSetBy = Automatic
+
+	partition 'Parâmetro vendas' = calculated
+		mode: import
+		source =
+				{
+				    ("Faturamento", NAMEOF('Medidas'[vlr_vendas]), 0),
+				    ("% margem bruta", NAMEOF('Medidas'[%_margem_bruta]), 1),
+				    ("Margem bruta", NAMEOF('Medidas'[vlr_margem_bruta]), 2),
+				    ("Transacoes", NAMEOF('Medidas'[qtd_transacoes]), 3),
+				    ("Custo", NAMEOF('Medidas'[vlr_custo]), 4),
+				    ("Produtos", NAMEOF('Medidas'[qtd_produtos]), 5),
+				    ("Ticket medio", NAMEOF('Medidas'[vlr_ticket_medio]), 6),
+				    ("% Faturamento", NAMEOF('Medidas'[percentual_vendas]), 7),
+				    ("Unidades vendidas", NAMEOF(Medidas[qtd_vendas]), 8)
+				}
+
+	annotation PBI_Id = 007f7949e5874ca9983bbb86b7fcb0c3
+

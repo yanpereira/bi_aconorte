@@ -1,0 +1,39 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.7.0/schema.json",
+  "name": "3423ff4582e131d78c71",
+  "position": {
+    "x": 0,
+    "y": 930.58915946582886,
+    "z": 15000,
+    "height": 149.31657501963866,
+    "width": 823.50353495679508,
+    "tabOrder": 15000
+  },
+  "visual": {
+    "visualType": "card",
+    "autoSelectVisualType": true,
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Medidas"
+                    }
+                  },
+                  "Property": "qtd_venda_media"
+                }
+              },
+              "queryRef": "Medidas.qtd_venda_media_90_dias",
+              "nativeQueryRef": "qtd_venda_media"
+            }
+          ]
+        }
+      }
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

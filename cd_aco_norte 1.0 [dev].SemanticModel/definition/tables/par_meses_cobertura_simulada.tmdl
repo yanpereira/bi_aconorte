@@ -1,0 +1,26 @@
+table par_meses_cobertura_simulada
+	lineageTag: a56574c6-b102-4b5e-9b55-10ac4d64b279
+
+	measure 'Valor par_meses_cobertura_simulada' = SELECTEDVALUE('par_meses_cobertura_simulada'[par_meses_cobertura_simulada])
+		formatString: 0
+		lineageTag: 0a59387a-82e4-4253-8e19-dcadd3dba6f1
+
+	column par_meses_cobertura_simulada
+		formatString: #,0.00
+		lineageTag: 5529bb8d-1954-4ed1-98bc-171122acd67b
+		summarizeBy: none
+		sourceColumn: [Value]
+
+		extendedProperty ParameterMetadata =
+				{
+				  "version": 0
+				}
+
+		annotation SummarizationSetBy = User
+
+	partition par_meses_cobertura_simulada-a313fb7d-3948-417c-aae9-dcea876bc2d4 = calculated
+		mode: import
+		source = GENERATESERIES(1, 12, 0.01)
+
+	annotation PBI_Id = a6ea9c3a3b664c1a9217d0cadb24076c
+

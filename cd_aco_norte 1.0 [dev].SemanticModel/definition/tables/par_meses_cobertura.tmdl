@@ -1,0 +1,26 @@
+table par_meses_cobertura
+	lineageTag: 0dd9404f-0778-49e7-87ee-566de0299a5a
+
+	measure 'Valor par_meses_cobertura' = SELECTEDVALUE('par_meses_cobertura'[par_meses_cobertura])
+		formatString: 0
+		lineageTag: a840d679-fb06-4764-be65-2e923288d225
+
+	column par_meses_cobertura
+		formatString: #,0.00
+		lineageTag: f29891b8-6aa0-490a-b734-63d60b7f30d0
+		summarizeBy: none
+		sourceColumn: [Value]
+
+		extendedProperty ParameterMetadata =
+				{
+				  "version": 0
+				}
+
+		annotation SummarizationSetBy = User
+
+	partition par_meses_cobertura-091e4c86-218a-4f80-b399-04024a7cb21c = calculated
+		mode: import
+		source = GENERATESERIES(1, 100, 0.05)
+
+	annotation PBI_Id = 74540924532847da871f5a3e79925341
+

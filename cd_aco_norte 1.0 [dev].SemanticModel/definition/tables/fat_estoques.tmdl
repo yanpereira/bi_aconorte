@@ -1,0 +1,105 @@
+table fat_estoques
+	lineageTag: 25d5b209-5eb2-4a6c-a33f-e0336c7b0836
+
+	column idProduto
+		dataType: double
+		lineageTag: b5236d0b-d116-4361-af1c-5168bd062a29
+		summarizeBy: sum
+		sourceColumn: idProduto
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column estoque
+		dataType: double
+		lineageTag: 474a3f2a-957c-4d9a-948f-91d6a1bd71c4
+		summarizeBy: sum
+		sourceColumn: estoque
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column alterado
+		dataType: dateTime
+		formatString: Short Date
+		lineageTag: 9afa4026-50fe-4043-9e00-7e2a7ee6556f
+		summarizeBy: none
+		sourceColumn: alterado
+
+		variation Variation
+			isDefault
+			relationship: 7a0c6294-c28a-438c-8985-eb698f19b059
+			defaultHierarchy: LocalDateTable_4ce980c7-6375-40bc-a2a2-3ad23d362995.'Hierarquia de datas'
+
+		changedProperty = DataType
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column ds_sistema
+		dataType: string
+		lineageTag: 6542db13-45e6-4093-adac-f13b233a56fb
+		summarizeBy: none
+		sourceColumn: ds_sistema
+
+		annotation SummarizationSetBy = Automatic
+
+	column id_produto
+		dataType: string
+		lineageTag: fdefe6a8-c5a9-4132-bfaf-f3b552e8624b
+		summarizeBy: none
+		sourceColumn: id_produto
+
+		annotation SummarizationSetBy = Automatic
+
+	column preco_compra =
+			
+			CALCULATE(
+			    [max_preco_compra] ,
+			    FILTER(
+			        dim_produtos ,
+			        dim_produtos[id_produto] = fat_estoques[id_produto]))
+		formatString: "R$"\ #,0.00;-"R$"\ #,0.00;"R$"\ #,0.00
+		lineageTag: 350b9527-fc4d-4c43-874e-e51670263e0c
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"currencyCulture":"pt-BR"}
+
+	column preco_venda =
+			
+			CALCULATE(
+			    [max_preco_venda] ,
+			    FILTER(
+			        dim_produtos ,
+			        dim_produtos[id_produto] = fat_estoques[id_produto]))
+		lineageTag: 9a285bda-76ea-438b-b2d1-a494ff1d0154
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	partition fat_estoques = m
+		mode: import
+		source =
+				let
+				    Fonte = PowerPlatform.Dataflows(null),
+				    Workspaces = Fonte{[Id="Workspaces"]}[Data],
+				    #"3302bffe-37e3-48cf-8e61-0e1eba5f63ce" = Workspaces{[workspaceId="3302bffe-37e3-48cf-8e61-0e1eba5f63ce"]}[Data],
+				    #"0e903939-a26b-42c1-9cc2-baebc4f5b136" = #"3302bffe-37e3-48cf-8e61-0e1eba5f63ce"{[dataflowId="0e903939-a26b-42c1-9cc2-baebc4f5b136"]}[Data],
+				    fat_estoques_ = #"0e903939-a26b-42c1-9cc2-baebc4f5b136"{[entity="fat_estoques",version=""]}[Data],
+				    #"Tipo Alterado" = Table.TransformColumnTypes(fat_estoques_,{{"idProduto", Int64.Type}}),
+				    #"Personalização Adicionada" = Table.AddColumn(#"Tipo Alterado", "id_produto", each Text.From([idProduto]) & Text.From([ds_sistema])),
+				    #"Tipo Alterado1" = Table.TransformColumnTypes(#"Personalização Adicionada",{{"idProduto", type number}, {"id_produto", type text}})
+				in
+				    #"Tipo Alterado1"
+
+	annotation PBI_NavigationStepName = Navegação
+
+	annotation PBI_ResultType = Table
+

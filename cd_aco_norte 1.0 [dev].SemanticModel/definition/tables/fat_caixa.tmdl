@@ -1,0 +1,345 @@
+table fat_caixa
+	lineageTag: d606f8d3-c09d-4da2-9a55-001c8dfa8887
+
+	measure dias_em_atraso
+		lineageTag: 643f8375-5468-4965-8a3f-d051f6d45143
+
+		annotation 436ba87b-9c83-4389-a31b-ebd06a36be98 = {"Expression":null}
+
+		annotation 277cc1b9-af89-4597-8e15-cacc25c0886b = Para usar caracteres especiais em um nome de medida, coloque todo o nome entre colchetes ( [] ) e adicione ] a quaisquer colchetes de fechamento no nome.
+
+	measure tipo_caixa =
+			
+			IF(
+			    SELECTEDVALUE(fat_caixa[tipo]) = "C",
+			    "CONTAS A RECEBER",
+			        IF(SELECTEDVALUE(fat_caixa[tipo]) = "D",
+			        "CONTAS A PAGAR", ""))
+		lineageTag: 20234d61-ee97-489c-bf0a-99473ea4a225
+
+	column idConta
+		dataType: int64
+		formatString: 0
+		lineageTag: 955119ab-5ffb-4fcb-a60a-aaba89ad92da
+		summarizeBy: sum
+		sourceColumn: idConta
+
+		annotation SummarizationSetBy = Automatic
+
+	column ds_sistema
+		dataType: string
+		lineageTag: 1c3b78a1-7b4a-454e-9820-c6d752ec7716
+		summarizeBy: none
+		sourceColumn: ds_sistema
+
+		annotation SummarizationSetBy = Automatic
+
+	column tpOrigem
+		dataType: string
+		lineageTag: 20bcd9b7-4f0c-4787-b2f9-9c0c6c6e301f
+		summarizeBy: none
+		sourceColumn: tpOrigem
+
+		annotation SummarizationSetBy = Automatic
+
+	column tipo
+		dataType: string
+		lineageTag: cf02b2ee-f7ea-4dd1-b437-a9ca3c337a33
+		summarizeBy: none
+		sourceColumn: tipo
+
+		annotation SummarizationSetBy = Automatic
+
+	column status
+		dataType: string
+		lineageTag: 49b055a1-8930-472f-837f-82ad54e17c0c
+		summarizeBy: none
+		sourceColumn: status
+
+		annotation SummarizationSetBy = Automatic
+
+	column idOrigem
+		dataType: double
+		lineageTag: 5eaed393-6130-43fa-9da5-14909a2fa6f4
+		summarizeBy: sum
+		sourceColumn: idOrigem
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column cd_pessoa
+		dataType: int64
+		formatString: 0
+		lineageTag: 6608cee5-abdb-4c13-ac5a-a19f09b07473
+		summarizeBy: sum
+		sourceColumn: cd_pessoa
+
+		annotation SummarizationSetBy = Automatic
+
+	column parcela
+		dataType: int64
+		formatString: 0
+		lineageTag: 1717bef4-9d7b-4be5-99eb-e0a83b420843
+		summarizeBy: sum
+		sourceColumn: parcela
+
+		annotation SummarizationSetBy = Automatic
+
+	column codContasCaixa
+		dataType: string
+		lineageTag: 5c1dc274-b64d-47d2-98d6-9f1b6ad5e4f5
+		summarizeBy: none
+		sourceColumn: codContasCaixa
+
+		annotation SummarizationSetBy = Automatic
+
+	column qtdeParcelas
+		dataType: int64
+		formatString: 0
+		lineageTag: dcb2b9a2-8556-4384-8383-8ddef9b236f9
+		summarizeBy: sum
+		sourceColumn: qtdeParcelas
+
+		annotation SummarizationSetBy = Automatic
+
+	column historico
+		dataType: string
+		lineageTag: b0185c61-16cd-4278-addb-5fbdfea26873
+		summarizeBy: none
+		sourceColumn: historico
+
+		annotation SummarizationSetBy = Automatic
+
+	column caixaLancamento
+		dataType: int64
+		formatString: 0
+		lineageTag: 285aa30a-cc48-4c6b-9999-2e89ea150aec
+		summarizeBy: sum
+		sourceColumn: caixaLancamento
+
+		annotation SummarizationSetBy = Automatic
+
+	column dtLancamento
+		dataType: dateTime
+		formatString: dd/mm/yy
+		lineageTag: 4a7149fa-76eb-46cb-8c2d-1f821cfa461c
+		summarizeBy: none
+		sourceColumn: dtLancamento
+
+		variation Variation
+			isDefault
+			relationship: 81077511-079f-4c84-8304-1fc1438319fa
+			defaultHierarchy: LocalDateTable_ab124baa-5cbf-427d-b89e-a80d47501b19.'Hierarquia de datas'
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isDateTimeCustom":true}
+
+	column dtVencimento
+		dataType: dateTime
+		formatString: dd/mm/yy
+		lineageTag: 1dabe604-4899-4078-8b6d-47b869dc762a
+		summarizeBy: none
+		sourceColumn: dtVencimento
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isDateTimeCustom":true}
+
+	column valDesconto
+		dataType: double
+		lineageTag: ccf54e37-6e2b-40a8-b19b-f015e7941098
+		summarizeBy: sum
+		sourceColumn: valDesconto
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column valMulta
+		dataType: double
+		lineageTag: e4eb18a1-192e-4696-aa01-558e46a57e54
+		summarizeBy: sum
+		sourceColumn: valMulta
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column valJuros
+		dataType: double
+		lineageTag: 3a0603e6-c668-45cf-8692-11869414ded6
+		summarizeBy: sum
+		sourceColumn: valJuros
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column valTaxa
+		dataType: double
+		lineageTag: c6b43a93-915e-421d-90a5-2517189db196
+		summarizeBy: sum
+		sourceColumn: valTaxa
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column caixaBaixa
+		dataType: int64
+		formatString: 0
+		lineageTag: 982057c7-c544-400f-90e4-095c182399e5
+		summarizeBy: sum
+		sourceColumn: caixaBaixa
+
+		annotation SummarizationSetBy = Automatic
+
+	column dtBaixa
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: e795f1c6-13e5-4f6f-b9b1-333e54e783a6
+		summarizeBy: none
+		sourceColumn: dtBaixa
+
+		variation Variation
+			isDefault
+			relationship: 2273492f-4a81-41f7-ba70-586fe225af73
+			defaultHierarchy: LocalDateTable_af7b44c8-51c6-4b15-82e1-271e6a2dfc8f.'Hierarquia de datas'
+
+		annotation SummarizationSetBy = Automatic
+
+	column codTipoPg
+		dataType: string
+		lineageTag: 3f9f957c-0f03-40ac-9004-3e4927f9e566
+		summarizeBy: none
+		sourceColumn: codTipoPg
+
+		annotation SummarizationSetBy = Automatic
+
+	column valBaixa
+		dataType: double
+		lineageTag: 7428256d-63a7-441a-b6e5-4c3ea62f3003
+		summarizeBy: sum
+		sourceColumn: valBaixa
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column motivoExtorno
+		dataType: string
+		lineageTag: d8db411c-a50f-43dc-92d0-96f8e42f3c64
+		summarizeBy: none
+		sourceColumn: motivoExtorno
+
+		annotation SummarizationSetBy = Automatic
+
+	column numeroBoleto
+		dataType: double
+		lineageTag: fb3bdedb-acb6-4f66-9575-7e2a910f9840
+		summarizeBy: sum
+		sourceColumn: numeroBoleto
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column Venda_ID = ```
+			
+			VAR Texto = 'fat_caixa'[historico]
+			VAR NumeroExtraido = 
+			    SELECTCOLUMNS(
+			        ADDCOLUMNS(
+			            GENERATESERIES(1, LEN(Texto)),
+			            "Letra", MID(Texto, [Value], 1)
+			        ),
+			        "Digito", [Letra]
+			    )
+			VAR SomenteNumeros = 
+			    CONCATENATEX(
+			        FILTER(NumeroExtraido, [Digito] >= "0" && [Digito] <= "9"),
+			        [Digito],
+			        ""
+			    )
+			RETURN 
+			    IF(SomenteNumeros <> "", VALUE(SomenteNumeros), BLANK())
+			```
+		dataType: int64
+		formatString: 0
+		lineageTag: abf4c58b-d4a4-4f5a-a780-eede5bf848f6
+		summarizeBy: count
+
+		changedProperty = DataType
+
+		annotation SummarizationSetBy = Automatic
+
+	column id_pessoa =
+			
+			fat_caixa[cd_pessoa]&
+			fat_caixa[ds_sistema]
+		lineageTag: bb45225f-06d0-4310-b137-45fbe4170e70
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column valor
+		dataType: double
+		formatString: "R$"\ #,0.00;-"R$"\ #,0.00;"R$"\ #,0.00
+		lineageTag: 073b2f45-40aa-47d6-b39e-685a16e2d341
+		summarizeBy: sum
+		sourceColumn: valor
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"currencyCulture":"pt-BR"}
+
+	column dias_atraso =
+			
+			IF(
+			    NOT ISBLANK(fat_caixa[dtVencimento]) && fat_caixa[dtVencimento] < TODAY(),
+			    DATEDIFF(fat_caixa[dtVencimento], TODAY(), DAY),
+			    0
+			)
+		formatString: 0
+		lineageTag: 0ed07296-86d5-491a-aacc-ef9fd0c902c9
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	column VendaID = ```
+			
+			VAR Texto = 'fat_caixa'[historico]
+			VAR PosicaoEspaco = FIND(" ", Texto, 1, -1)
+			VAR Resultado = 
+			    IF(
+			        PosicaoEspaco > 0,
+			        MID(Texto, PosicaoEspaco + 1, LEN(Texto) - PosicaoEspaco),
+			        BLANK()
+			    )
+			RETURN Resultado
+			```
+		lineageTag: 5f01cc08-2fcd-410a-92bb-268d472fd67e
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	partition fat_caixa = m
+		mode: import
+		source =
+				let
+				    Fonte = PowerPlatform.Dataflows(null),
+				    Workspaces = Fonte{[Id="Workspaces"]}[Data],
+				    #"3302bffe-37e3-48cf-8e61-0e1eba5f63ce" = Workspaces{[workspaceId="3302bffe-37e3-48cf-8e61-0e1eba5f63ce"]}[Data],
+				    #"0e903939-a26b-42c1-9cc2-baebc4f5b136" = #"3302bffe-37e3-48cf-8e61-0e1eba5f63ce"{[dataflowId="0e903939-a26b-42c1-9cc2-baebc4f5b136"]}[Data],
+				    dim_pessoas_ = #"0e903939-a26b-42c1-9cc2-baebc4f5b136"{[entity="caixa",version=""]}[Data],
+				    #"Tipo Alterado1" = Table.TransformColumnTypes(dim_pessoas_,{{"idConta", Int64.Type}}),
+				    #"Colunas Renomeadas" = Table.RenameColumns(#"Tipo Alterado1",{{"idPessoa", "cd_pessoa"}})
+				in
+				    #"Colunas Renomeadas"
+
+	annotation PBI_NavigationStepName = Navegação
+
+	annotation PBI_ResultType = Table
+

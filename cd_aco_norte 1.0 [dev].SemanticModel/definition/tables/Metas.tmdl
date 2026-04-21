@@ -1,0 +1,37 @@
+table Metas
+	lineageTag: 2d8345a5-6b1c-47a7-9d37-c0646aedd60c
+
+	column Data
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: cbb77fe4-2d55-474b-a50b-99da54b30e4d
+		summarizeBy: none
+		sourceColumn: Data
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column Meta
+		dataType: int64
+		lineageTag: bf6a040e-0972-4f99-b097-6e5e2edf8ae3
+		summarizeBy: sum
+		sourceColumn: Meta
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	partition Metas = m
+		mode: import
+		source =
+				let
+				    Fonte = Table.FromRows(Json.Document(Binary.Decompress(Binary.FromText("i45WKk6tKEnUTUvNLErUUTBUSElVyE0sOrw8H8QyMjAyUdJRMjQAA6VYHZDy9NK8FFQNiUlFmTnI6o2g6mMB", BinaryEncoding.Base64), Compression.Deflate)), let _t = ((type nullable text) meta [Serialized.Text = true]) in type table [Data = _t, Meta = _t]),
+				    #"Tipo Alterado" = Table.TransformColumnTypes(Fonte,{{"Data", type date}, {"Meta", Int64.Type}})
+				in
+				    #"Tipo Alterado"
+
+	annotation PBI_ResultType = Table
+
+	annotation PBI_NavigationStepName = Navegação
+

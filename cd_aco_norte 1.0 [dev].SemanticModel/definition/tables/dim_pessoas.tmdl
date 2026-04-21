@@ -1,0 +1,118 @@
+table dim_pessoas
+	lineageTag: abda2ce4-52a3-41a3-9d41-56d71447cecd
+
+	column cd_pessoa
+		dataType: int64
+		formatString: 0
+		lineageTag: 7489da9b-bef6-4067-aa79-78a6c1c9abba
+		summarizeBy: sum
+		sourceColumn: cd_pessoa
+
+		annotation SummarizationSetBy = Automatic
+
+	column ds_pessoa
+		dataType: string
+		lineageTag: a1357c51-0ec1-44b8-9a77-80ffe2cd8610
+		summarizeBy: none
+		sourceColumn: ds_pessoa
+
+		annotation SummarizationSetBy = Automatic
+
+	column ds_endereco
+		dataType: string
+		lineageTag: a10fca56-990a-425a-bf9b-27ebf6ec6acd
+		summarizeBy: none
+		sourceColumn: ds_endereco
+
+		annotation SummarizationSetBy = Automatic
+
+	column ds_cidade
+		dataType: string
+		lineageTag: 13413e11-850c-4f6b-ac77-5d2bbaac7c6b
+		summarizeBy: none
+		sourceColumn: ds_cidade
+
+		annotation SummarizationSetBy = Automatic
+
+	column UF
+		dataType: string
+		lineageTag: c054f11a-66d9-44da-a69f-60a828dd4494
+		summarizeBy: none
+		sourceColumn: UF
+
+		annotation SummarizationSetBy = Automatic
+
+	column telefone
+		dataType: string
+		lineageTag: 3d6644ca-2e1a-4cd7-ba76-2e0940030780
+		summarizeBy: none
+		sourceColumn: telefone
+
+		annotation SummarizationSetBy = Automatic
+
+	column flag_cliente
+		dataType: string
+		lineageTag: 15af1c9e-7a51-4329-8ab8-b4adf91ac9ea
+		summarizeBy: none
+		sourceColumn: flag_cliente
+
+		annotation SummarizationSetBy = Automatic
+
+	column flag_fornecedor
+		dataType: string
+		lineageTag: dd13096e-0be8-470d-9093-e4ca3b8a5ec1
+		summarizeBy: none
+		sourceColumn: flag_fornecedor
+
+		annotation SummarizationSetBy = Automatic
+
+	column flag_trasnportador
+		dataType: string
+		lineageTag: d22b1385-fd4f-40a7-b521-4266a67a37ec
+		summarizeBy: none
+		sourceColumn: flag_trasnportador
+
+		annotation SummarizationSetBy = Automatic
+
+	column flag_vendedor
+		dataType: string
+		lineageTag: a9d0a082-b26e-416b-91a0-7b8a43b9e3cd
+		summarizeBy: none
+		sourceColumn: flag_vendedor
+
+		annotation SummarizationSetBy = Automatic
+
+	column ds_sistema
+		dataType: string
+		lineageTag: 63ae5893-1130-41ab-81fa-b2568ee78f2a
+		summarizeBy: none
+		sourceColumn: ds_sistema
+
+		annotation SummarizationSetBy = Automatic
+
+	column id_pessoa
+		dataType: string
+		lineageTag: 4db9bd16-a092-4a96-bf73-cf42809b4b54
+		summarizeBy: none
+		sourceColumn: id_pessoa
+
+		annotation SummarizationSetBy = Automatic
+
+	partition dim_pessoas = m
+		mode: import
+		source =
+				let
+				    Fonte = PowerPlatform.Dataflows(null),
+				    Workspaces = Fonte{[Id="Workspaces"]}[Data],
+				    #"3302bffe-37e3-48cf-8e61-0e1eba5f63ce" = Workspaces{[workspaceId="3302bffe-37e3-48cf-8e61-0e1eba5f63ce"]}[Data],
+				    #"0e903939-a26b-42c1-9cc2-baebc4f5b136" = #"3302bffe-37e3-48cf-8e61-0e1eba5f63ce"{[dataflowId="0e903939-a26b-42c1-9cc2-baebc4f5b136"]}[Data],
+				    dim_pessoas_ = #"0e903939-a26b-42c1-9cc2-baebc4f5b136"{[entity="dim_pessoas",version=""]}[Data],
+				    #"Personalização Adicionada" = Table.AddColumn(dim_pessoas_, "id_pessoa", each Text.From([cd_pessoa]) & Text.From([ds_sistema])),
+				    #"Tipo Alterado" = Table.TransformColumnTypes(#"Personalização Adicionada",{{"id_pessoa", type text}})
+				in
+				    #"Tipo Alterado"
+
+	annotation PBI_NavigationStepName = Navegação
+
+	annotation PBI_ResultType = Table
+

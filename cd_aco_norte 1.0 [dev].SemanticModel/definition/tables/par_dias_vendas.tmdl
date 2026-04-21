@@ -1,0 +1,26 @@
+table par_dias_vendas
+	lineageTag: 17304690-e1ee-4451-8e89-61534151e072
+
+	measure 'Valor par_dias_vendas' = SELECTEDVALUE('par_dias_vendas'[par_dias_vendas])
+		formatString: 0
+		lineageTag: 34d696aa-57d5-49a6-8e7d-b380452e60be
+
+	column par_dias_vendas
+		formatString: 0
+		lineageTag: b8e4069d-9774-4970-8bbb-ba875b9dad6d
+		summarizeBy: none
+		sourceColumn: [Value]
+
+		extendedProperty ParameterMetadata =
+				{
+				  "version": 0
+				}
+
+		annotation SummarizationSetBy = User
+
+	partition par_dias_vendas-b0b16e6d-7f19-48de-9428-0ed0126c391f = calculated
+		mode: import
+		source = GENERATESERIES(30, 360, 30)
+
+	annotation PBI_Id = 329f6dda41de4736987c429750c60d0b
+

@@ -1,0 +1,73 @@
+model Model
+	culture: pt-BR
+	defaultPowerBIDataSourceVersion: powerBI_V3
+	sourceQueryCulture: pt-BR
+	dataAccessOptions
+		legacyRedirects
+		returnErrorValuesAsNull
+
+annotation PBI_QueryOrder = ["Medidas","Consulta1","par_atualizacao","dim_agrupamentos","Metas","Produtos Convert","dim_contas_caixa","dim_pessoas","dim_produtos","dim_tipo_pg","fat_livro_caixa","fat_estoques","fat_movimento","fat_vendas","dim_planos","fat_vendas_cancel","Produtos Convert (2)","fat_caixa"]
+
+annotation __PBI_TimeIntelligenceEnabled = 1
+
+annotation PBI_ProTooling = ["DaxQueryView_Desktop","WebModelingEdit","DevMode"]
+
+ref table DateTableTemplate_a6bab402-fe87-4691-8a4d-958e218f0ee1
+ref table dim_calendario
+ref table dim_vendedores
+ref table Medidas
+ref table par_meses_vendas
+ref table dim_sistema
+ref table par_meses_cobertura
+ref table par_qtd_estoque
+ref table par_meses_cobertura_simulada
+ref table par_dias_sem_venda
+ref table par_atualizacao
+ref table LocalDateTable_33d01945-020f-4be8-a507-3a2621b35d57
+ref table par_dias_vendas
+ref table dim_status
+ref table dim_ordem_venda
+ref table par_percent_margem
+ref table LocalDateTable_731e28b6-b81b-4f0c-a153-adbe1f92fcde
+ref table Metas
+ref table dim_contas_caixa
+ref table LocalDateTable_5b9ee7e7-179e-425f-a14f-d299d1f72e4c
+ref table LocalDateTable_906242b9-1820-41ee-a0bb-02db02e81857
+ref table LocalDateTable_35282be8-4c31-44f3-bbe8-5a91cd2e327f
+ref table LocalDateTable_711d66bd-71df-48db-b81d-999970e43440
+ref table LocalDateTable_0192bc38-4cec-4119-99d7-b800721b6540
+ref table LocalDateTable_4ed699ae-d399-4a86-976d-d6d908b4656d
+ref table LocalDateTable_49288355-092a-4316-b776-9018362b3701
+ref table LocalDateTable_85c99f41-d95d-40c5-9b30-c47e2b7f34d4
+ref table dim_pessoas
+ref table dim_produtos
+ref table dim_tipo_pg
+ref table fat_livro_caixa
+ref table LocalDateTable_57b29106-cb59-4718-be77-613157c03e65
+ref table LocalDateTable_b3415495-e46c-4d04-9cfb-d06b6509e6ba
+ref table fat_estoques
+ref table LocalDateTable_4ce980c7-6375-40bc-a2a2-3ad23d362995
+ref table fat_movimento
+ref table fat_vendas
+ref table LocalDateTable_f0527294-4761-4457-a512-60eb1aa827c5
+ref table LocalDateTable_c7c1506d-3c02-4d56-9bb3-2827af3d5ca9
+ref table LocalDateTable_2fc1c74e-0907-4687-b98e-60cb264ba7fc
+ref table dim_planos
+ref table 'Produtos Convert'
+ref table fat_vendas_cancel
+ref table LocalDateTable_1676c5a6-2f1a-488d-9e01-127b0094acb7
+ref table LocalDateTable_a881b74c-4f1f-484c-bba7-7af0a8ff8255
+ref table 'Parâmetro vendas'
+ref table 'Produtos Convert (2)'
+ref table LocalDateTable_0573fd57-942e-4837-a48c-f264f0bf0f55
+ref table LocalDateTable_60fa51f7-f004-41af-8d75-754e2aa29505
+ref table LocalDateTable_70ca9f36-df9d-489f-b40a-7bef05cef57e
+ref table Parâmetro
+ref table fat_caixa
+ref table LocalDateTable_ab124baa-5cbf-427d-b89e-a80d47501b19
+ref table LocalDateTable_af7b44c8-51c6-4b15-82e1-271e6a2dfc8f
+ref table LocalDateTable_72195b58-743f-4cb9-8e19-e40505c2a90f
+ref table LocalDateTable_c82f1351-181d-471a-b663-fe067f5da03f
+
+ref cultureInfo pt-BR
+

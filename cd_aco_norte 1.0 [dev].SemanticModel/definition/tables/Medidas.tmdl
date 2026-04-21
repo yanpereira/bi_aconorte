@@ -1,0 +1,1214 @@
+table Medidas
+	lineageTag: f6fe2fd6-c8aa-4b36-8c2f-644fe8bd4dde
+
+	measure qtd_transacoes =
+			
+			DISTINCTCOUNT(
+			    fat_vendas[cd_venda])
+		formatString: #,0
+		displayFolder: 1. Vendas
+		lineageTag: 89d7033f-ad17-4556-a7cb-8333c49ff2bc
+
+	measure qtd_vendas =
+			
+			SUM(
+			    fat_vendas[qtd_venda])
+		formatString: #,0.00
+		displayFolder: 1. Vendas
+		lineageTag: e943ef3d-408d-4524-959d-1f441be4a3d9
+
+	measure qtd_vendedores =
+			
+			DISTINCTCOUNT(
+			    fat_vendas[cd_vendedor])
+		formatString: #,0
+		displayFolder: 1. Vendas
+		lineageTag: e7f39a9a-9018-4c47-a9b7-a8b60723c311
+
+	measure vlr_vendas =
+			
+			SUM(
+			    fat_vendas[vlr_venda_total])
+		formatString: "R$"#,0.00;-"R$"#,0.00;"R$"#,0.00
+		displayFolder: 1. Vendas
+		lineageTag: 25058614-2a9f-4f10-9ed2-f17edc3aa37d
+
+		annotation PBI_FormatHint = {"currencyCulture":"es-BR"}
+
+	measure vlr_custo =
+			
+			SUMX(
+			    fat_vendas ,
+			    fat_vendas[vlr_custo] * fat_vendas[qtd_venda])
+		formatString: "R$"#,0.00;-"R$"#,0.00;"R$"#,0.00
+		displayFolder: 1. Vendas
+		lineageTag: d054e51d-5af0-422a-bce2-3a8f5b602090
+
+		annotation PBI_FormatHint = {"currencyCulture":"es-BR"}
+
+	measure %_margem_bruta =
+			
+			DIVIDE(
+			    [vlr_margem_bruta] ,
+			    [vlr_vendas] , 0)
+		formatString: 0.00%;-0.00%;0.00%
+		displayFolder: 1. Vendas
+		lineageTag: 3af2f57c-83a3-4ada-bea9-a0dba6c4ecbc
+
+	measure vlr_margem_bruta =
+			
+			[vlr_vendas] - [vlr_custo]
+		formatString: "R$"#,0.00;-"R$"#,0.00;"R$"#,0.00
+		displayFolder: 1. Vendas
+		lineageTag: 35c1e5de-4e26-4048-a322-7294702966a7
+
+		annotation PBI_FormatHint = {"currencyCulture":"es-BR"}
+
+	measure vlr_ticket_medio =
+			
+			DIVIDE(
+			    [vlr_vendas] ,
+			    [qtd_transacoes] , 0)
+		formatString: "R$"#,0.00;-"R$"#,0.00;"R$"#,0.00
+		displayFolder: 1. Vendas
+		lineageTag: d08146cf-bbc0-465a-acb5-62103e81b292
+
+		annotation PBI_FormatHint = {"currencyCulture":"es-BR"}
+
+	measure vlr_desconto =
+			
+			SUM(
+			    fat_vendas[vlr_desconto])
+		displayFolder: 1. Vendas
+		lineageTag: 4e084008-4cde-4fb6-aa85-c7ca3ed1e6bb
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure qtd_produtos =
+			
+			DISTINCTCOUNT(
+			    fat_vendas[cd_produto])
+		formatString: #,0
+		displayFolder: 1. Vendas
+		lineageTag: 14e815b6-4336-4c43-87bd-6eb010245792
+
+	measure qtd_clientes =
+			
+			DISTINCTCOUNT(
+			    fat_vendas[cd_cliente])
+		formatString: #,0
+		displayFolder: 1. Vendas
+		lineageTag: d5ef58ff-537e-42e2-9384-fba61b068e0b
+
+	measure dt_primeira_entrada =
+			
+			CALCULATE(
+			    MIN(
+			        fat_movimento[dt_movimento]) ,
+			    ALL(
+			        dim_calendario) ,
+			    FILTER(
+			        fat_movimento ,
+			        fat_movimento[tipo_movimento] = "E" &&
+			        fat_movimento[stMov] = "E"))
+		formatString: Short Date
+		displayFolder: 2.Movimentações
+		lineageTag: 38408fc6-5c72-49a3-8623-75f53166f8d6
+
+	measure dt_ultima_saida =
+			
+			CALCULATE(
+			    MAX(
+			        fat_movimento[dt_movimento]) ,
+			    ALL(
+			        dim_calendario) ,
+			    FILTER(
+			        fat_movimento ,
+			        fat_movimento[tipo_movimento] = "S" &&
+			        fat_movimento[stMov] = "E") ,
+			    ALL(
+			        fat_movimento) ,
+			    VALUES(
+			        dim_produtos[cd_produto]))
+		formatString: Short Date
+		displayFolder: 2.Movimentações
+		lineageTag: e1740f0b-de03-45f9-af57-1342a25a2b5b
+
+	measure qtd_dias_sem_venda =
+			
+			DATEDIFF(
+			    [dt_ultima_saida] ,
+			    TODAY() , DAY)
+		formatString: #,0
+		displayFolder: 2.Movimentações
+		lineageTag: 43643faf-c9fd-4573-bb38-b4efb94e5e71
+
+	measure qtd_entradas =
+			
+			CALCULATE(
+			    [qtd_movimentos] ,
+			    FILTER(
+			        fat_movimento ,
+			        fat_movimento[tipo_movimento] = "E" &&
+			        fat_movimento[stMov] = "E"))
+		formatString: #,0.00
+		displayFolder: 2.Movimentações
+		lineageTag: dfe7376b-de5f-4b5a-8c17-6ff47bbd5b29
+
+	measure qtd_movimentos =
+			
+			SUM(
+			    fat_movimento[qtd_movimento])
+		formatString: #,0.00
+		displayFolder: 2.Movimentações
+		lineageTag: 7fdaacbc-ae0f-4927-80ac-74523262f172
+
+	measure qtd_saidas =
+			
+			CALCULATE(
+			    [qtd_movimentos] ,
+			    FILTER(
+			        fat_movimento ,
+			        fat_movimento[tipo_movimento] = "S" &&
+			        fat_movimento[stMov] = "E"))
+		formatString: #,0.00
+		displayFolder: 2.Movimentações
+		lineageTag: 203e03c1-bb4f-457a-b7d0-12c19c109a37
+
+	measure saldo_estoque =
+			
+			[qtd_entradas] - [qtd_saidas]
+		formatString: #,0.00
+		displayFolder: 2.Movimentações
+		lineageTag: 182b1b02-531b-45bd-98fd-35c91b6224e9
+
+	measure vlr_custo_unitario =
+			
+			SUMX(
+			    fat_movimento ,
+			    DIVIDE(
+			        fat_movimento[vlr_total] ,
+			        fat_movimento[qtd_movimento] , 0))
+		formatString: "R$"#,0.00;-"R$"#,0.00;"R$"#,0.00
+		displayFolder: 2.Movimentações
+		lineageTag: 3c298795-5e1d-4581-b7e0-d640103b01e3
+
+		annotation PBI_FormatHint = {"currencyCulture":"es-BR"}
+
+	measure vlr_estoque =
+			
+			SUMX(
+			    FILTER(
+			        fat_estoques ,
+			        fat_estoques[estoque] > 0) ,
+			    fat_estoques[estoque] * fat_estoques[preco_compra])
+		formatString: "R$"#,0.00;-"R$"#,0.00;"R$"#,0.00
+		displayFolder: 2.Movimentações
+		lineageTag: 744b92c6-6f4b-4e51-861f-f9d79961c2ae
+
+		annotation PBI_FormatHint = {"currencyCulture":"es-BR"}
+
+	measure qtd_produtos_estoque_negativo =
+			
+			CALCULATE(
+			    COUNTROWS(
+			        dim_produtos) ,
+			    FILTER(
+			        dim_produtos ,
+			        dim_produtos[qtd_saldo_estoque] < 0))
+		formatString: #,0
+		displayFolder: 2.Movimentações
+		lineageTag: 01e45c6a-fbd5-45af-94e8-fe10af6d4d8d
+
+	measure qtd_produtos_estoque_zerado =
+			
+			CALCULATE(
+			    COUNTROWS(
+			        dim_produtos) ,
+			    FILTER(
+			        dim_produtos ,
+			        dim_produtos[qtd_saldo_estoque] = 0))
+		formatString: #,0
+		displayFolder: 2.Movimentações
+		lineageTag: 4493ff76-dfaa-4b40-b1b7-a0e5d5a6d49d
+
+	measure qtd_produtos_sem_venda_mais_30_dias =
+			
+			CALCULATE(
+			    COUNTROWS(
+			        dim_produtos) ,
+			    FILTER(
+			        dim_produtos ,
+			        dim_produtos[qtd_dias_sem_venda] > 30 &&
+			        dim_produtos[qtd_dias_sem_venda] <= 60))
+		formatString: #,0
+		displayFolder: 2.Movimentações
+		lineageTag: 6aba692e-24ac-4e60-951a-cf92e853b038
+
+	measure qtd_produtos_sem_venda_mais_60_dias =
+			
+			CALCULATE(
+			    COUNTROWS(
+			        dim_produtos) ,
+			    FILTER(
+			        dim_produtos ,
+			        dim_produtos[qtd_dias_sem_venda] > 60 &&
+			        dim_produtos[qtd_dias_sem_venda] <= 90))
+		formatString: #,0
+		displayFolder: 2.Movimentações
+		lineageTag: dd2998da-a3c0-4b3a-bae6-c82b309f0a0e
+
+	measure qtd_produtos_sem_venda_mais_90_dias =
+			
+			CALCULATE(
+			    COUNTROWS(
+			        dim_produtos) ,
+			    FILTER(
+			        dim_produtos ,
+			        dim_produtos[qtd_dias_sem_venda] > 90))
+		formatString: #,0
+		displayFolder: 2.Movimentações
+		lineageTag: 4cf7a115-b60e-4fdf-9055-ccaa8f9d60b6
+
+	measure vlr_caixa =
+			
+			SUM(
+			    fat_caixa[vlr_lancamento])
+		formatString: "R$"#,0.00;-"R$"#,0.00;"R$"#,0.00
+		displayFolder: 3. Financeiro
+		lineageTag: 2c58af24-0555-4cbe-930d-b7a002ed6004
+
+		annotation PBI_FormatHint = {"currencyCulture":"es-BR"}
+
+	measure vlr_credito =
+			
+			CALCULATE(
+			    [vlr_caixa] ,
+			    FILTER(
+			        fat_caixa ,
+			        fat_caixa[tipo] = "C"))
+		formatString: "R$"#,0.00;-"R$"#,0.00;"R$"#,0.00
+		displayFolder: 3. Financeiro
+		lineageTag: 5276a47d-231b-41d8-aabf-595965969746
+
+		annotation PBI_FormatHint = {"currencyCulture":"es-BR"}
+
+	measure vlr_debito =
+			
+			CALCULATE(
+			    [vlr_caixa] ,
+			    FILTER(
+			        fat_caixa ,
+			        fat_caixa[tipo] = "D"))
+		formatString: "R$"#,0.00;-"R$"#,0.00;"R$"#,0.00
+		displayFolder: 3. Financeiro
+		lineageTag: 9720c97f-d49d-49b0-835e-3913bc54d4e8
+
+		annotation PBI_FormatHint = {"currencyCulture":"es-BR"}
+
+	measure vlr_saldo_caixa =
+			
+			[vlr_credito] - [vlr_debito]
+		formatString: "R$"#,0.00;-"R$"#,0.00;"R$"#,0.00
+		displayFolder: 3. Financeiro
+		lineageTag: 4d38b57d-2652-4e5e-bf8c-cb01377b2a4a
+
+		annotation PBI_FormatHint = {"currencyCulture":"es-BR"}
+
+	measure qtd_vendas_3_meses =
+			
+			CALCULATE(
+			    [qtd_vendas] ,
+			    FILTER(
+			        ALL(
+			            dim_calendario) ,
+			        dim_calendario[Últimos Meses] > 0 &&
+			        dim_calendario[Últimos Meses] <= SELECTEDVALUE(par_meses_vendas[par_meses_vendas])))
+		formatString: #,0.00
+		displayFolder: 2.Movimentações
+		lineageTag: 74fff594-9021-4145-b54f-299e6802eae3
+
+	measure saldo_estoque_all =
+			
+			CALCULATE(
+			    [saldo_estoque_geral] ,
+			    ALL(
+			        dim_calendario))
+		formatString: #,0.00
+		displayFolder: 2.Movimentações
+		lineageTag: 76bb2c93-96eb-4073-aa30-945e696d07cb
+
+	measure qtd_venda_media_3_meses =
+			
+			DIVIDE(
+			    [qtd_vendas_3_meses] ,
+			    SELECTEDVALUE(
+			        par_meses_vendas[par_meses_vendas]) , 0)
+		formatString: #,0.00
+		displayFolder: 2.Movimentações
+		lineageTag: 62b3536f-8ef6-4321-951d-dc4b69449baa
+
+	measure qtd_meses_capacidade_estoque =
+			
+			DIVIDE(
+			    ([saldo_estoque_all] + [qtd_pedidos_comprados]),
+			    [qtd_venda_media],0)
+		displayFolder: 2.Movimentações
+		lineageTag: e4116f3d-62c7-41f7-8058-7df74eecae24
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure situacao_abastecer_estoque =
+			
+			SWITCH(
+			    TRUE() ,
+			    [qtd_meses_capacidade_estoque] > 0 &&
+			    [qtd_meses_capacidade_estoque] < 2 &&
+			    [qtd_venda_media] <> BLANK() &&
+			    [qtd_pedidos_comprados] = 0,
+			    "Comprar urgentemente" ,
+			    [qtd_meses_capacidade_estoque] >= 2 &&
+			    [qtd_venda_media] <> BLANK() &&
+			    [qtd_pedidos_comprados] = 0,
+			    "Comprar quando possível" ,
+			    [qtd_meses_capacidade_estoque] < 0 &&
+			    [qtd_venda_media] <> BLANK() ,
+			    "Verificar real situação" ,
+			    [qtd_meses_capacidade_estoque] > 0 &&
+			    [qtd_meses_capacidade_estoque] < 2 &&
+			    [qtd_venda_media] <> BLANK() &&
+			    [qtd_pedidos_comprados] > 0,
+			    "Aguardando recebimento" ,
+			    [qtd_meses_capacidade_estoque] >= 2 &&
+			    [qtd_venda_media] <> BLANK() &&
+			    [qtd_pedidos_comprados] > 0,
+			    "Aguardando recebimento")
+		displayFolder: 2.Movimentações
+		lineageTag: f276b488-8384-44b4-a5fa-8ea2c6954e50
+
+	measure saldo_estoque_geral =
+			
+			SUM(
+			    fat_estoques[estoque])
+		formatString: #,0.00
+		displayFolder: 2.Movimentações
+		lineageTag: 24d20ad9-d5f9-484c-966d-2e0688b88168
+
+	measure qtd_pedidos_recebidos =
+
+			CALCULATE(
+			    SUM(
+			       'Produtos Convert'[quantidade]) ,
+			    FILTER(
+			        'Produtos Convert' ,
+			        'Produtos Convert'[status] = "Recebido"))
+		formatString: #,0.00
+		displayFolder: 7. Pedidos
+		lineageTag: 7a6596dd-59d8-440a-9fc8-95b22d99eac3
+
+	measure qtd_pedidos_comprados =
+
+			[qtd_pedidos_comprados_nova_tabela]
+		formatString: #,0.00
+		displayFolder: 7. Pedidos
+		lineageTag: 91a0bca9-8559-45e0-9045-873835ebf518
+
+	measure qtd_dias_receber_pedido =
+			-- INATIVO: fat_pedidos não existe no modelo
+			BLANK()
+		formatString: #,0
+		displayFolder: 7. Pedidos
+		lineageTag: d51f0ad5-71e0-4bdd-ba59-2958c7e686d9
+
+	measure vlr_cotacao =
+			-- INATIVO: fat_cotacoes não existe no modelo
+			BLANK()
+		formatString: "R$"\ #,0.00;-"R$"\ #,0.00;"R$"\ #,0.00
+		displayFolder: 6. Cotações
+		lineageTag: 3bf07f85-0448-4c0d-a87b-6bdd3843c9fa
+
+		annotation PBI_FormatHint = {"currencyCulture":"pt-BR"}
+
+	measure vlr_cotacao_anterior =
+			-- INATIVO: depende de vlr_cotacao (fat_cotacoes não existe)
+			BLANK()
+		formatString: "R$"\ #,0.00;-"R$"\ #,0.00;"R$"\ #,0.00
+		displayFolder: 6. Cotações
+		lineageTag: ef815d85-2133-44ea-ba95-195280a6b0db
+
+		annotation PBI_FormatHint = {"currencyCulture":"pt-BR"}
+
+	measure %_variacao_cotacao =
+			-- INATIVO: depende de vlr_cotacao (fat_cotacoes não existe)
+			BLANK()
+		formatString: 0.00%;-0.00%;0.00%
+		displayFolder: 6. Cotações
+		lineageTag: c29fd399-36b2-426f-a0d4-253cab2b54fb
+
+	measure vlr_cotacao_max =
+			-- INATIVO: fat_cotacoes não existe no modelo
+			BLANK()
+		formatString: "R$"\ #,0.00;-"R$"\ #,0.00;"R$"\ #,0.00
+		displayFolder: 6. Cotações
+		lineageTag: bdd15b1f-fef1-4ec4-911f-b854cebd70f7
+
+		annotation PBI_FormatHint = {"currencyCulture":"pt-BR"}
+
+	measure vlr_cotacao_min =
+			-- INATIVO: fat_cotacoes não existe no modelo
+			BLANK()
+		formatString: "R$"\ #,0.00;-"R$"\ #,0.00;"R$"\ #,0.00
+		displayFolder: 6. Cotações
+		lineageTag: 38762210-644f-4a03-95d8-8124dc90ed58
+
+		annotation PBI_FormatHint = {"currencyCulture":"pt-BR"}
+
+	measure qtd_pedidos_conf =
+			-- INATIVO: fat_pedidos_conf não existe no modelo
+			BLANK()
+		formatString: #,0
+		displayFolder: 7. Pedidos
+		lineageTag: 9ee9ad4e-f0af-47ce-b375-bda688d0eaa4
+
+	measure qtd_meses_capacidade_estoque_2 =
+
+			IF(
+			    [qtd_meses_capacidade_estoqueII] <= SELECTEDVALUE(par_meses_cobertura[par_meses_cobertura]) ,
+			    "S" , "N")
+		displayFolder: 2.Movimentações
+		lineageTag: 5ac21940-e396-4794-9a56-8c3e23e3ee81
+
+	measure qtd_estoque_par =
+
+			IF(
+			    [saldo_estoque_all] >= SELECTEDVALUE(par_qtd_estoque[par_qtd_estoque]) ,
+			    "S" , "N")
+		displayFolder: 2.Movimentações
+		lineageTag: ae6f66cf-3141-4221-8998-b8b0c8313234
+
+	measure qtd_estoque_cobertura_simulada =
+
+			DIVIDE(
+			    (([saldo_estoque_all] + [qtd_pedidos_comprados]) *
+			    SELECTEDVALUE(par_meses_cobertura_simulada[par_meses_cobertura_simulada])) ,
+			    [qtd_meses_capacidade_estoque] , 0)
+		displayFolder: 8. Simulações
+		lineageTag: 081e7f8a-72bd-469f-aebe-0540694f6d42
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure qtd_comprar_simulacao =
+
+			SUMX(
+			    dim_produtos,
+			    MAX(0, [qtd_estoque_cobertura_simulada] - [estoque_adq])
+			)
+		displayFolder: 8. Simulações
+		lineageTag: e0d19073-4d0f-4894-a8e7-39796e34c7e8
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure qtd_dias_sem_venda_par =
+
+			IF(
+			    [qtd_dias_sem_venda] >= SELECTEDVALUE(par_dias_sem_venda[par_dias_sem_venda]) ,
+			    "S" , "N")
+		displayFolder: 2.Movimentações
+		lineageTag: b6161737-980d-4f7f-88b8-55b922603f86
+
+	measure max_entrada =
+
+			CALCULATE(
+			    MAX(
+			        dim_produtos[dt_ultima_entrada]) ,
+			    ALL(
+			        dim_produtos) ,
+			    VALUES(
+			        dim_produtos[cd_produto]))
+		formatString: Short Date
+		displayFolder: 2.Movimentações
+		lineageTag: 708b44c4-64c4-4b5d-9e3f-98aae8f937f1
+
+	measure qtd_vendas_dias =
+
+			CALCULATE(
+			    [qtd_vendas] ,
+			    FILTER(
+			        ALL(
+			            dim_calendario) ,
+			        dim_calendario[Últimos Dias] >= 0 &&
+			        dim_calendario[Últimos Dias] <= SELECTEDVALUE(par_dias_vendas[par_dias_vendas])))
+		formatString: #,0.00
+		displayFolder: 2.Movimentações
+		lineageTag: 98f1f35f-5af1-4450-8b44-73673d5bfd3d
+
+	measure qtd_venda_media =
+
+			DIVIDE(
+			    [qtd_vendas_dias] ,
+			    SUM(par_dias_vendas[par_dias_vendas]))*30
+		displayFolder: 2.Movimentações
+		lineageTag: dcec440b-9a49-4642-ab47-df2d7a1c0602
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure vlr_peso =
+
+			SUMX(
+			    SUMMARIZE(
+			        dim_produtos ,
+			        dim_produtos[cd_produto] ,
+			        dim_produtos[ds_produto] ,
+			        dim_produtos[id_produto] ,
+			        dim_produtos[peso_bruto]) ,
+			    dim_produtos[peso_bruto])
+		formatString: #,0.00
+		displayFolder: 2.Movimentações
+		lineageTag: 82a33968-cc59-47ff-b0bc-2a0e411cc007
+
+	measure vlr_peso_compra =
+
+			IF(
+			    [vlr_peso] = 0 ,
+			    [qtd_comprar_simulacao] ,
+			    ([qtd_comprar_simulacao] * [vlr_peso]))
+		formatString: #,0.00
+		displayFolder: 8. Simulações
+		lineageTag: 214eaeba-91e9-4cb2-a900-52dbb64fa9da
+
+	measure max_venda =
+
+			CALCULATE(
+			    MAX(
+			        dim_produtos[dt_ultima_venda]) ,
+			    ALL(
+			        dim_produtos) ,
+			    VALUES(
+			        dim_produtos[cd_produto]))
+		formatString: Short Date
+		displayFolder: 2.Movimentações
+		lineageTag: d4e6e7c1-56ce-44be-a4a1-3b94a7355ed0
+
+	measure max_preco_venda =
+
+			CALCULATE(
+			    MAX(dim_produtos[preco_venda]),
+			    ALL(dim_produtos),
+			    VALUES(dim_produtos[cd_produto])
+			)
+		formatString: "R$"\ #,0.00;-"R$"\ #,0.00;"R$"\ #,0.00
+		displayFolder: 5. Preços
+		lineageTag: de42c8df-5845-4d6c-aa04-9543496d7d99
+
+		annotation PBI_FormatHint = {"currencyCulture":"pt-BR"}
+
+	measure max_preco_compra =
+
+			CALCULATE(
+			    MAX(dim_produtos[preco_compra]),
+			    ALL(dim_produtos),
+			    VALUES(dim_produtos[id_produto])
+			)
+		formatString: "R$"\ #,0.00;-"R$"\ #,0.00;"R$"\ #,0.00
+		displayFolder: 5. Preços
+		lineageTag: 679e5e41-8354-4950-8558-5a9a023eab5a
+
+		annotation PBI_FormatHint = {"currencyCulture":"pt-BR"}
+
+	measure vlr_custo_peso_compra =
+
+			IF(
+			    [vlr_peso] = 0 ,
+			    BLANK() ,
+			    DIVIDE(
+			        [max_preco_compra] ,
+			        CALCULATE(
+			        MAX(
+			            dim_produtos[peso_bruto]) ,
+			        ALL(
+			            dim_produtos) ,
+			        VALUES(
+			            dim_produtos[cd_produto])) , 0))
+		formatString: "R$"\ #,0.00;-"R$"\ #,0.00;"R$"\ #,0.00
+		displayFolder: 5. Preços
+		lineageTag: a07d6e1b-ece9-4027-b138-d54918914ba3
+
+		annotation PBI_FormatHint = {"currencyCulture":"pt-BR"}
+
+	measure %_margem_estoque =
+
+			VAR precovenda  = [max_preco_venda]
+			VAR precocompra = [max_preco_compra]
+			RETURN
+			DIVIDE(
+			    precovenda - precocompra ,
+			    precovenda , 0)
+		formatString: 0.00%;-0.00%;0.00%
+		displayFolder: 5. Preços
+		lineageTag: 6011ec85-4b47-46c6-8466-fa06ee749a42
+
+	measure dt_ultima_compra_cliente =
+
+			MAX(
+			    fat_vendas[dt_venda])
+		formatString: Short Date
+		displayFolder: 1. Vendas
+		lineageTag: 5a379f36-1934-4036-9732-25e8afcc752a
+
+	measure qtd_pedidos_comprados_nova_tabela =
+
+			SUM(
+			    'Produtos Convert'[saldo_a_receber_cvt])
+		formatString: #,0
+		displayFolder: 7. Pedidos
+		lineageTag: d8d53b4e-0ffa-43e5-bded-49174551990e
+
+	measure qtd_pedidos_nova_tabela =
+
+			SUM(
+			    'Produtos Convert'[quantidade])
+		formatString: #,0
+		displayFolder: 7. Pedidos
+		lineageTag: 4ce82b92-fe4d-4ea0-b9ca-e852fe93659d
+
+	measure %_margem_bruta_par =
+
+			IF(
+			    [%_margem_bruta] <= SELECTEDVALUE(par_percent_margem[par_percent_margem])/100 ,
+			    [%_margem_bruta] , BLANK())
+		formatString: 0.00%;-0.00%;0.00%
+		displayFolder: 1. Vendas
+		lineageTag: acb1030a-9c0d-49dc-b32f-c4913482fb29
+
+	measure qtd_dias_uteis =
+
+			COUNTROWS(
+			    FILTER(
+			        dim_calendario ,
+			        dim_calendario[Dia ùtil] = "S"))
+		formatString: #,0
+		displayFolder: 3. Financeiro
+		lineageTag: 4e6805d5-9c24-4b2d-a2d2-dd751fed2d62
+
+	measure vlr_venda_media_util =
+
+			DIVIDE(
+			    [vlr_meta] ,
+			    [qtd_dias_uteis] , 0)
+		formatString: "R$"\ #,0.00;-"R$"\ #,0.00;"R$"\ #,0.00
+		displayFolder: 3. Financeiro
+		lineageTag: 8c44fe6e-0553-40bc-8c6f-cb303367e52f
+
+		annotation PBI_FormatHint = {"currencyCulture":"pt-BR"}
+
+	measure vlr_meta =
+
+			CALCULATE(
+			    SUM(
+			        Metas[Meta]) ,
+			    ALL(
+			        dim_calendario) ,
+			    VALUES(
+			        dim_calendario[Anomes]))
+		formatString: "R$"\ #,0.00;-"R$"\ #,0.00;"R$"\ #,0.00
+		displayFolder: 3. Financeiro
+		lineageTag: abb80bbb-2c2c-4909-8b98-f9b2f134f2c5
+
+		annotation PBI_FormatHint = {"currencyCulture":"pt-BR"}
+
+	measure vlr_restante_meta =
+
+			[vlr_meta] - [vlr_vendas]
+		formatString: "R$"\ #,0.00;-"R$"\ #,0.00;"R$"\ #,0.00
+		displayFolder: 3. Financeiro
+		lineageTag: 81d3d68d-dc59-4bcf-a1f6-9a21c5f1dff9
+
+		annotation PBI_FormatHint = {"currencyCulture":"pt-BR"}
+
+	measure vlr_venda_media_util_dia =
+
+			DIVIDE(
+			    [vlr_meta] ,
+			    CALCULATE(
+			        [qtd_dias_uteis] ,
+			        ALL(
+			            dim_calendario) ,
+			        VALUES(
+			            dim_calendario[Anomes])) , 0)
+		formatString: "R$"\ #,0.00;-"R$"\ #,0.00;"R$"\ #,0.00
+		displayFolder: 3. Financeiro
+		lineageTag: 23edd809-001a-4724-a088-ecd28e3ccf3c
+
+		annotation PBI_FormatHint = {"currencyCulture":"pt-BR"}
+
+	measure vlr_restante_meta_dia =
+
+			[vlr_venda_media_util_dia] - [vlr_vendas]
+		formatString: "R$"\ #,0.00;-"R$"\ #,0.00;"R$"\ #,0.00
+		displayFolder: 3. Financeiro
+		lineageTag: ce371d4b-5168-4205-af5a-305bb954c37b
+
+		annotation PBI_FormatHint = {"currencyCulture":"pt-BR"}
+
+	measure vlr_peso_compra_2 =
+
+			SUMX(
+			    VALUES(
+			        dim_produtos[id_produto]) ,
+			    [vlr_peso_compra])
+		formatString: #,0.00
+		displayFolder: 8. Simulações
+		lineageTag: 74f7a3b2-a2fa-421e-b48f-84614df95110
+
+	measure 'Faturamento Ano Anterior' =
+			
+			CALCULATE(
+			    SUM(fat_vendas[vlr_venda]),
+			    SAMEPERIODLASTYEAR(dim_calendario[Data])
+			)
+		displayFolder: 1. Vendas
+		lineageTag: 797af317-4035-4171-ba65-29cb376b4beb
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Faturamento Mês Anterior' =
+			
+			CALCULATE(
+			    SUM(fat_vendas[vlr_venda]),
+			    PREVIOUSMONTH(dim_calendario[Data])
+			)
+		displayFolder: 1. Vendas
+		lineageTag: 9ff8280d-f145-4b6e-b2cb-111818695b8a
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure qtd_comprar_simulacao2 =
+
+			SUMX(
+			    dim_produtos,
+			    MAX(0, [qtd_estoque_cobertura_simulada] - [saldo_estoque_all] - [qtd_pedidos_comprados])
+			)
+		displayFolder: 8. Simulações
+		lineageTag: 82a7d73e-f21e-4865-ac9b-d6f36bdae301
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure valor_em_estoque =
+
+			SUMX(
+			    ADDCOLUMNS(
+			        VALUES(dim_produtos[cd_produto]),
+			        "preco_venda",
+			        CALCULATE(
+			            MAX(dim_produtos[preco_venda]),
+			            ALLEXCEPT(dim_produtos, dim_produtos[cd_produto])
+			        ),
+			        "saldo_estoque",
+			        CALCULATE(
+			            [saldo_estoque_geral],
+			            ALLEXCEPT(dim_produtos, dim_produtos[cd_produto])
+			        )
+			    ),
+			    [preco_venda] * [saldo_estoque]
+			)
+		formatString: "R$"\ #,0.00;-"R$"\ #,0.00;"R$"\ #,0.00
+		displayFolder: 2.Movimentações
+		lineageTag: f977e249-d074-43d9-8379-4e36f1314deb
+
+		annotation PBI_FormatHint = {"currencyCulture":"pt-BR"}
+
+	measure Status_Estoque =
+
+			VAR DiasSemVenda = [qtd_venda_media]
+			VAR EstoqueAtual = [saldo_estoque_all]
+			RETURN
+			IF(
+			    EstoqueAtual > 0 && (DiasSemVenda = 0 || ISBLANK(DiasSemVenda)), "Com estoque e sem venda",
+			    IF(
+			        (EstoqueAtual = 0 || ISBLANK(EstoqueAtual)) && (DiasSemVenda = 0 || ISBLANK(DiasSemVenda)), "Sem estoque e sem venda",
+			        BLANK()
+			    )
+			)
+		displayFolder: 2.Movimentações
+		lineageTag: 3973036a-b37e-417c-be70-ca166d349b75
+
+	measure percentual_vendas =
+
+			DIVIDE(
+			    [vlr_vendas],
+			    CALCULATE([vlr_vendas], ALLSELECTED(fat_vendas))
+			)
+		formatString: 0.00%;-0.00%;0.00%
+		displayFolder: 1. Vendas
+		lineageTag: c2d4fb2f-d271-4bbc-bed9-e7b500017236
+
+	measure qtd_uni_produtos =
+			
+			COUNT(
+			    fat_vendas[cd_produto])
+		formatString: 0
+		displayFolder: 1. Vendas
+		lineageTag: c7bed0d4-27d3-455f-a3e4-cced1939f0f3
+
+	measure media_preco_venda =
+
+			CALCULATE(
+			    AVERAGE(dim_produtos[preco_venda]),
+			    ALL(dim_produtos),
+			    VALUES(dim_produtos[cd_produto])
+			)
+		formatString: "R$"\ #,0.00;-"R$"\ #,0.00;"R$"\ #,0.00
+		displayFolder: 5. Preços
+		lineageTag: 174e760e-afb6-4377-bc12-7051221fabb4
+
+		annotation PBI_FormatHint = {"currencyCulture":"pt-BR"}
+
+	measure media_preco_compra =
+
+			CALCULATE(
+			    AVERAGE(dim_produtos[preco_compra]),
+			    ALL(dim_produtos),
+			    VALUES(dim_produtos[id_produto])
+			)
+		formatString: "R$"\ #,0.00;-"R$"\ #,0.00;"R$"\ #,0.00
+		displayFolder: 5. Preços
+		lineageTag: 9406ca97-8bfa-4498-ba83-5d2e3b08ce4e
+
+		annotation PBI_FormatHint = {"currencyCulture":"pt-BR"}
+
+	measure %_margem_par =
+
+			IF(
+			    [%_margem_estoque] >= SELECTEDVALUE(par_percent_margem[par_percent_margem]) ,
+			    "S" , "N")
+		displayFolder: 5. Preços
+		lineageTag: 521182b6-dd56-48b6-bc61-f41f5ac6c9c9
+
+	measure vlr_estoque_vendas =
+			
+			SUMX(
+			    FILTER(
+			        fat_estoques ,
+			        fat_estoques[estoque] > 0) ,
+			    fat_estoques[estoque] * fat_estoques[preco_venda])
+		formatString: "R$"\ #,0.00;-"R$"\ #,0.00;"R$"\ #,0.00
+		displayFolder: 2.Movimentações
+		lineageTag: 00f92eae-a27a-4ac4-b93f-9136e11d2424
+
+		annotation PBI_FormatHint = {"currencyCulture":"pt-BR"}
+
+	measure %_margem_estoque_media =
+
+			VAR precovenda  = [media_preco_venda]
+			VAR precocompra = [media_preco_compra]
+			RETURN
+			DIVIDE(
+			    precovenda - precocompra ,
+			    precovenda , 0)
+		formatString: 0.00%;-0.00%;0.00%
+		displayFolder: 5. Preços
+		lineageTag: 5e29f85e-b898-4d82-9cb0-9be675d27577
+
+	measure valor_total_estoque =
+
+			VAR PrecoMaximo =
+			    CALCULATE(
+			        MAX(dim_produtos[preco_venda]),
+			        ALL(dim_produtos),
+			        VALUES(dim_produtos[cd_produto])
+			    )
+			VAR SaldoEstoque = [saldo_estoque_all]
+			RETURN
+			PrecoMaximo * SaldoEstoque
+		formatString: "R$"\ #,0.00;-"R$"\ #,0.00;"R$"\ #,0.00
+		displayFolder: 3. Financeiro
+		lineageTag: e8bf745d-2a49-4bd8-8e25-48ff4d891a67
+
+		annotation PBI_FormatHint = {"currencyCulture":"pt-BR"}
+
+	measure saldo_a_receber = SUM('Produtos Convert'[SaldoaReceber])
+		displayFolder: 7. Pedidos
+		lineageTag: f4ab8922-83ff-4071-99a6-882fd2e938b3
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure qtd_meses_capacidade_estoqueII =
+			
+			DIVIDE(
+			    ([saldo_estoque_all] + [saldo_a_receber]),
+			    [qtd_venda_media],0)
+		displayFolder: 2.Movimentações
+		lineageTag: 9b1b13e8-d695-4c62-b63d-ed5585a5672a
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure estoque_adq = [saldo_estoque_all] + SUM('Produtos Convert'[SaldoaReceber])
+		displayFolder: 2.Movimentações
+		lineageTag: 1e77a744-e35a-4679-b029-ac299d174579
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'cobertura simulada' = [qtd_venda_media] * [Valor par_meses_cobertura_simulada]
+		displayFolder: 8. Simulações
+		lineageTag: f96ca962-5511-4302-adda-cb7515fa04cf
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure contas_a_pagar =
+
+			CALCULATE(
+			    SUM(fat_caixa[vlr_lancamento]),
+			    fat_caixa[tipo] = "D",
+			    fat_caixa[status] = "A"
+			)
+		formatString: "R$"\ #,0.00;-"R$"\ #,0.00;"R$"\ #,0.00
+		displayFolder: 3. Financeiro
+		lineageTag: 5b08ef4e-99eb-43f4-9217-8d8c1278e28f
+
+		annotation PBI_FormatHint = {"currencyCulture":"pt-BR"}
+
+	measure contas_a_receber =
+
+			CALCULATE(
+			    SUM(fat_caixa[vlr_lancamento]),
+			    fat_caixa[tipo] = "C",
+			    fat_caixa[status] = "A"
+			)
+		formatString: "R$"\ #,0.00;-"R$"\ #,0.00;"R$"\ #,0.00
+		displayFolder: 3. Financeiro
+		lineageTag: c24e8541-9fb7-4ccc-a726-67805605c015
+
+		annotation PBI_FormatHint = {"currencyCulture":"pt-BR"}
+
+	measure ultimo_preco =
+
+			VAR UltimaData = MAX('Produtos Convert'[dt_pedido])
+			RETURN
+			CALCULATE(
+			    MAX('Produtos Convert'[CustoUnitário]),
+			    'Produtos Convert'[dt_pedido] = UltimaData
+			)
+		formatString: "R$"\ #,0.00;-"R$"\ #,0.00;"R$"\ #,0.00
+		displayFolder: 5. Preços
+		lineageTag: dc1fa2cd-33f6-49f6-8a71-b5b1350d08bb
+
+		annotation PBI_FormatHint = {"currencyCulture":"pt-BR"}
+
+	measure vlr_estoque_final_compra =
+			
+			VAR DataFim = EOMONTH(MAX(dim_calendario[Data]), 0)
+			
+			VAR EstoqueAtualCompra =
+			    CALCULATE(
+			        SUMX(
+			            FILTER(fat_estoques, fat_estoques[estoque] > 0),
+			            fat_estoques[estoque] * fat_estoques[preco_compra]
+			        ),
+			        ALL(dim_calendario)
+			    )
+			
+			-- entradas após DataFim: valor real da NF (vlr_total)
+			VAR EntradasApos =
+			    CALCULATE(
+			        SUM(fat_movimento[vlr_total]),
+			        ALL(dim_calendario),
+			        fat_movimento[tipo_movimento] = "E",
+			        fat_movimento[stMov] = "E",
+			        fat_movimento[dt_movimento] > DataFim
+			    )
+			
+			-- saídas após DataFim: qtd × preço de compra atual
+			VAR SaidasApos =
+			    CALCULATE(
+			        SUMX(
+			            fat_movimento,
+			            fat_movimento[qtd_movimento] * RELATED(dim_produtos[preco_compra])
+			        ),
+			        ALL(dim_calendario),
+			        fat_movimento[tipo_movimento] = "S",
+			        fat_movimento[stMov] = "E",
+			        fat_movimento[dt_movimento] > DataFim
+			    )
+			
+			RETURN
+			IF(
+			    NOT ISBLANK(EstoqueAtualCompra),
+			    EstoqueAtualCompra - EntradasApos + SaidasApos
+			)
+		formatString: "R$"\ #,0.00;-"R$"\ #,0.00;"R$"\ #,0.00
+		displayFolder: 4. CMV
+		lineageTag: a1b2c3d4-e5f6-7890-abcd-ef1234567801
+
+		annotation PBI_FormatHint = {"currencyCulture":"pt-BR"}
+
+	measure vlr_estoque_inicial_compra =
+			
+			CALCULATE(
+			    [vlr_estoque_final_compra],
+			    PREVIOUSMONTH(dim_calendario[Data])
+			)
+		formatString: "R$"\ #,0.00;-"R$"\ #,0.00;"R$"\ #,0.00
+		displayFolder: 4. CMV
+		lineageTag: a1b2c3d4-e5f6-7890-abcd-ef1234567802
+
+		annotation PBI_FormatHint = {"currencyCulture":"pt-BR"}
+
+	measure vlr_compras_mes =
+			
+			VAR DataInicio = MIN(dim_calendario[Data])
+			VAR DataFim    = MAX(dim_calendario[Data])
+			RETURN
+			CALCULATE(
+			    SUM(fat_movimento[vlr_total]),
+			    ALL(dim_calendario),
+			    fat_movimento[tipo_movimento] = "E",
+			    fat_movimento[stMov] = "E",
+			    fat_movimento[dt_movimento] >= DataInicio,
+			    fat_movimento[dt_movimento] <= DataFim
+			)
+		formatString: "R$"\ #,0.00;-"R$"\ #,0.00;"R$"\ #,0.00
+		displayFolder: 4. CMV
+		lineageTag: a1b2c3d4-e5f6-7890-abcd-ef1234567803
+
+		annotation PBI_FormatHint = {"currencyCulture":"pt-BR"}
+
+	measure cmv_compra =
+			
+			VAR EI = [vlr_estoque_inicial_compra]
+			VAR C  = [vlr_compras_mes]
+			VAR EF = [vlr_estoque_final_compra]
+			RETURN
+			IF(
+			    NOT ISBLANK(EI) || NOT ISBLANK(C),
+			    EI + C - EF
+			)
+		formatString: "R$"\ #,0.00;-"R$"\ #,0.00;"R$"\ #,0.00
+		displayFolder: 4. CMV
+		lineageTag: a1b2c3d4-e5f6-7890-abcd-ef1234567804
+
+		annotation PBI_FormatHint = {"currencyCulture":"pt-BR"}
+
+	measure vlr_estoque_final_venda =
+			
+			VAR DataFim = EOMONTH(MAX(dim_calendario[Data]), 0)
+			
+			VAR EstoqueAtualVenda =
+			    CALCULATE(
+			        SUMX(
+			            FILTER(fat_estoques, fat_estoques[estoque] > 0),
+			            fat_estoques[estoque] * fat_estoques[preco_venda]
+			        ),
+			        ALL(dim_calendario)
+			    )
+			
+			-- entradas após DataFim: qtd × preço de venda atual
+			VAR EntradasApos =
+			    CALCULATE(
+			        SUMX(
+			            fat_movimento,
+			            fat_movimento[qtd_movimento] * RELATED(dim_produtos[preco_venda])
+			        ),
+			        ALL(dim_calendario),
+			        fat_movimento[tipo_movimento] = "E",
+			        fat_movimento[stMov] = "E",
+			        fat_movimento[dt_movimento] > DataFim
+			    )
+			
+			-- saídas após DataFim: qtd × preço de venda atual
+			VAR SaidasApos =
+			    CALCULATE(
+			        SUMX(
+			            fat_movimento,
+			            fat_movimento[qtd_movimento] * RELATED(dim_produtos[preco_venda])
+			        ),
+			        ALL(dim_calendario),
+			        fat_movimento[tipo_movimento] = "S",
+			        fat_movimento[stMov] = "E",
+			        fat_movimento[dt_movimento] > DataFim
+			    )
+			
+			RETURN
+			IF(
+			    NOT ISBLANK(EstoqueAtualVenda),
+			    EstoqueAtualVenda - EntradasApos + SaidasApos
+			)
+		formatString: "R$"\ #,0.00;-"R$"\ #,0.00;"R$"\ #,0.00
+		displayFolder: 4. CMV
+		lineageTag: a1b2c3d4-e5f6-7890-abcd-ef1234567805
+
+		annotation PBI_FormatHint = {"currencyCulture":"pt-BR"}
+
+	measure vlr_estoque_inicial_venda =
+			
+			CALCULATE(
+			    [vlr_estoque_final_venda],
+			    PREVIOUSMONTH(dim_calendario[Data])
+			)
+		formatString: "R$"\ #,0.00;-"R$"\ #,0.00;"R$"\ #,0.00
+		displayFolder: 4. CMV
+		lineageTag: a1b2c3d4-e5f6-7890-abcd-ef1234567806
+
+		annotation PBI_FormatHint = {"currencyCulture":"pt-BR"}
+
+	measure vlr_compras_mes_venda =
+			
+			VAR DataInicio = MIN(dim_calendario[Data])
+			VAR DataFim    = MAX(dim_calendario[Data])
+			RETURN
+			CALCULATE(
+			    SUMX(
+			        fat_movimento,
+			        fat_movimento[qtd_movimento] * RELATED(dim_produtos[preco_venda])
+			    ),
+			    ALL(dim_calendario),
+			    fat_movimento[tipo_movimento] = "E",
+			    fat_movimento[stMov] = "E",
+			    fat_movimento[dt_movimento] >= DataInicio,
+			    fat_movimento[dt_movimento] <= DataFim
+			)
+		formatString: "R$"\ #,0.00;-"R$"\ #,0.00;"R$"\ #,0.00
+		displayFolder: 4. CMV
+		lineageTag: a1b2c3d4-e5f6-7890-abcd-ef1234567807
+
+		annotation PBI_FormatHint = {"currencyCulture":"pt-BR"}
+
+	measure cmv_venda =
+			
+			VAR EI = [vlr_estoque_inicial_venda]
+			VAR C  = [vlr_compras_mes_venda]
+			VAR EF = [vlr_estoque_final_venda]
+			RETURN
+			IF(
+			    NOT ISBLANK(EI) || NOT ISBLANK(C),
+			    EI + C - EF
+			)
+		formatString: "R$"\ #,0.00;-"R$"\ #,0.00;"R$"\ #,0.00
+		displayFolder: 4. CMV
+		lineageTag: a1b2c3d4-e5f6-7890-abcd-ef1234567808
+
+		annotation PBI_FormatHint = {"currencyCulture":"pt-BR"}
+
+	column 'Coluna 1'
+		dataType: string
+		isHidden
+		lineageTag: f9eb529b-8e3c-4dc7-bbb1-ca65f0c99483
+		summarizeBy: none
+		sourceColumn: Coluna 1
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Medidas-1d4c68fb-1108-4bf8-b321-ad2b36332957 = m
+		mode: import
+		source =
+				let
+				    Fonte = Table.FromRows(Json.Document(Binary.Decompress(Binary.FromText("i44FAA==", BinaryEncoding.Base64), Compression.Deflate)), let _t = ((type nullable text) meta [Serialized.Text = true]) in type table [#"Coluna 1" = _t]),
+				    #"Tipo Alterado" = Table.TransformColumnTypes(Fonte,{{"Coluna 1", type text}})
+				in
+				    #"Tipo Alterado"
+
+	annotation PBI_ResultType = Table
+
+	annotation PBI_NavigationStepName = Navegação
+

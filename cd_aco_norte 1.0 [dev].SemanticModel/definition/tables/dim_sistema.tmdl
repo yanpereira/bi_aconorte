@@ -1,0 +1,21 @@
+table dim_sistema
+	lineageTag: a3e5f46e-c762-46cc-9a2a-ad88cfe4d519
+
+	column ds_sistema
+		lineageTag: 9a7e0f24-3a4b-4308-90f3-5f77368c5a78
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: fat_vendas[ds_sistema]
+
+		annotation SummarizationSetBy = Automatic
+
+	partition dim_sistema-0c9e1293-b5b5-4783-b382-9b192e0c6e56 = calculated
+		mode: import
+		source =
+				
+				SUMMARIZE(
+				    fat_vendas ,
+				    fat_vendas[ds_sistema])
+
+	annotation PBI_Id = 80d94dd530014eef93ef7783aa89b1ed
+
