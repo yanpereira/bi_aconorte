@@ -271,9 +271,9 @@ table Medidas
 		lineageTag: 4cf7a115-b60e-4fdf-9055-ccaa8f9d60b6
 
 	measure vlr_caixa =
-			
+
 			SUM(
-			    fat_caixa[vlr_lancamento])
+			    fat_caixa[valor])
 		formatString: "R$"#,0.00;-"R$"#,0.00;"R$"#,0.00
 		displayFolder: 3. Financeiro
 		lineageTag: 2c58af24-0555-4cbe-930d-b7a002ed6004
@@ -957,7 +957,7 @@ table Medidas
 	measure contas_a_pagar =
 
 			CALCULATE(
-			    SUM(fat_caixa[vlr_lancamento]),
+			    SUM(fat_caixa[valor]),
 			    fat_caixa[tipo] = "D",
 			    fat_caixa[status] = "A"
 			)
@@ -970,7 +970,7 @@ table Medidas
 	measure contas_a_receber =
 
 			CALCULATE(
-			    SUM(fat_caixa[vlr_lancamento]),
+			    SUM(fat_caixa[valor]),
 			    fat_caixa[tipo] = "C",
 			    fat_caixa[status] = "A"
 			)
