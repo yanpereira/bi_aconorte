@@ -271,9 +271,9 @@ table Medidas
 		lineageTag: 4cf7a115-b60e-4fdf-9055-ccaa8f9d60b6
 
 	measure vlr_caixa =
-
+			
 			SUM(
-			    fat_caixa[valor])
+			    fat_caixa[vlr_lancamento])
 		formatString: "R$"#,0.00;-"R$"#,0.00;"R$"#,0.00
 		displayFolder: 3. Financeiro
 		lineageTag: 2c58af24-0555-4cbe-930d-b7a002ed6004
@@ -395,7 +395,7 @@ table Medidas
 		lineageTag: 24d20ad9-d5f9-484c-966d-2e0688b88168
 
 	measure qtd_pedidos_recebidos =
-
+			
 			CALCULATE(
 			    SUM(
 			       'Produtos Convert'[quantidade]) ,
@@ -407,7 +407,7 @@ table Medidas
 		lineageTag: 7a6596dd-59d8-440a-9fc8-95b22d99eac3
 
 	measure qtd_pedidos_comprados =
-
+			
 			[qtd_pedidos_comprados_nova_tabela]
 		formatString: #,0.00
 		displayFolder: 7. Pedidos
@@ -471,7 +471,7 @@ table Medidas
 		lineageTag: 9ee9ad4e-f0af-47ce-b375-bda688d0eaa4
 
 	measure qtd_meses_capacidade_estoque_2 =
-
+			
 			IF(
 			    [qtd_meses_capacidade_estoqueII] <= SELECTEDVALUE(par_meses_cobertura[par_meses_cobertura]) ,
 			    "S" , "N")
@@ -479,7 +479,7 @@ table Medidas
 		lineageTag: 5ac21940-e396-4794-9a56-8c3e23e3ee81
 
 	measure qtd_estoque_par =
-
+			
 			IF(
 			    [saldo_estoque_all] >= SELECTEDVALUE(par_qtd_estoque[par_qtd_estoque]) ,
 			    "S" , "N")
@@ -487,7 +487,7 @@ table Medidas
 		lineageTag: ae6f66cf-3141-4221-8998-b8b0c8313234
 
 	measure qtd_estoque_cobertura_simulada =
-
+			
 			DIVIDE(
 			    (([saldo_estoque_all] + [qtd_pedidos_comprados]) *
 			    SELECTEDVALUE(par_meses_cobertura_simulada[par_meses_cobertura_simulada])) ,
@@ -498,7 +498,7 @@ table Medidas
 		annotation PBI_FormatHint = {"isGeneralNumber":true}
 
 	measure qtd_comprar_simulacao =
-
+			
 			SUMX(
 			    dim_produtos,
 			    MAX(0, [qtd_estoque_cobertura_simulada] - [estoque_adq])
@@ -509,7 +509,7 @@ table Medidas
 		annotation PBI_FormatHint = {"isGeneralNumber":true}
 
 	measure qtd_dias_sem_venda_par =
-
+			
 			IF(
 			    [qtd_dias_sem_venda] >= SELECTEDVALUE(par_dias_sem_venda[par_dias_sem_venda]) ,
 			    "S" , "N")
@@ -517,7 +517,7 @@ table Medidas
 		lineageTag: b6161737-980d-4f7f-88b8-55b922603f86
 
 	measure max_entrada =
-
+			
 			CALCULATE(
 			    MAX(
 			        dim_produtos[dt_ultima_entrada]) ,
@@ -530,7 +530,7 @@ table Medidas
 		lineageTag: 708b44c4-64c4-4b5d-9e3f-98aae8f937f1
 
 	measure qtd_vendas_dias =
-
+			
 			CALCULATE(
 			    [qtd_vendas] ,
 			    FILTER(
@@ -543,7 +543,7 @@ table Medidas
 		lineageTag: 98f1f35f-5af1-4450-8b44-73673d5bfd3d
 
 	measure qtd_venda_media =
-
+			
 			DIVIDE(
 			    [qtd_vendas_dias] ,
 			    SUM(par_dias_vendas[par_dias_vendas]))*30
@@ -553,7 +553,7 @@ table Medidas
 		annotation PBI_FormatHint = {"isGeneralNumber":true}
 
 	measure vlr_peso =
-
+			
 			SUMX(
 			    SUMMARIZE(
 			        dim_produtos ,
@@ -567,7 +567,7 @@ table Medidas
 		lineageTag: 82a33968-cc59-47ff-b0bc-2a0e411cc007
 
 	measure vlr_peso_compra =
-
+			
 			IF(
 			    [vlr_peso] = 0 ,
 			    [qtd_comprar_simulacao] ,
@@ -577,7 +577,7 @@ table Medidas
 		lineageTag: 214eaeba-91e9-4cb2-a900-52dbb64fa9da
 
 	measure max_venda =
-
+			
 			CALCULATE(
 			    MAX(
 			        dim_produtos[dt_ultima_venda]) ,
@@ -590,7 +590,7 @@ table Medidas
 		lineageTag: d4e6e7c1-56ce-44be-a4a1-3b94a7355ed0
 
 	measure max_preco_venda =
-
+			
 			CALCULATE(
 			    MAX(dim_produtos[preco_venda]),
 			    ALL(dim_produtos),
@@ -603,7 +603,7 @@ table Medidas
 		annotation PBI_FormatHint = {"currencyCulture":"pt-BR"}
 
 	measure max_preco_compra =
-
+			
 			CALCULATE(
 			    MAX(dim_produtos[preco_compra]),
 			    ALL(dim_produtos),
@@ -616,7 +616,7 @@ table Medidas
 		annotation PBI_FormatHint = {"currencyCulture":"pt-BR"}
 
 	measure vlr_custo_peso_compra =
-
+			
 			IF(
 			    [vlr_peso] = 0 ,
 			    BLANK() ,
@@ -636,7 +636,7 @@ table Medidas
 		annotation PBI_FormatHint = {"currencyCulture":"pt-BR"}
 
 	measure %_margem_estoque =
-
+			
 			VAR precovenda  = [max_preco_venda]
 			VAR precocompra = [max_preco_compra]
 			RETURN
@@ -648,7 +648,7 @@ table Medidas
 		lineageTag: 6011ec85-4b47-46c6-8466-fa06ee749a42
 
 	measure dt_ultima_compra_cliente =
-
+			
 			MAX(
 			    fat_vendas[dt_venda])
 		formatString: Short Date
@@ -656,7 +656,7 @@ table Medidas
 		lineageTag: 5a379f36-1934-4036-9732-25e8afcc752a
 
 	measure qtd_pedidos_comprados_nova_tabela =
-
+			
 			SUM(
 			    'Produtos Convert'[saldo_a_receber_cvt])
 		formatString: #,0
@@ -664,7 +664,7 @@ table Medidas
 		lineageTag: d8d53b4e-0ffa-43e5-bded-49174551990e
 
 	measure qtd_pedidos_nova_tabela =
-
+			
 			SUM(
 			    'Produtos Convert'[quantidade])
 		formatString: #,0
@@ -672,7 +672,7 @@ table Medidas
 		lineageTag: 4ce82b92-fe4d-4ea0-b9ca-e852fe93659d
 
 	measure %_margem_bruta_par =
-
+			
 			IF(
 			    [%_margem_bruta] <= SELECTEDVALUE(par_percent_margem[par_percent_margem])/100 ,
 			    [%_margem_bruta] , BLANK())
@@ -681,7 +681,7 @@ table Medidas
 		lineageTag: acb1030a-9c0d-49dc-b32f-c4913482fb29
 
 	measure qtd_dias_uteis =
-
+			
 			COUNTROWS(
 			    FILTER(
 			        dim_calendario ,
@@ -691,7 +691,7 @@ table Medidas
 		lineageTag: 4e6805d5-9c24-4b2d-a2d2-dd751fed2d62
 
 	measure vlr_venda_media_util =
-
+			
 			DIVIDE(
 			    [vlr_meta] ,
 			    [qtd_dias_uteis] , 0)
@@ -702,7 +702,7 @@ table Medidas
 		annotation PBI_FormatHint = {"currencyCulture":"pt-BR"}
 
 	measure vlr_meta =
-
+			
 			CALCULATE(
 			    SUM(
 			        Metas[Meta]) ,
@@ -717,7 +717,7 @@ table Medidas
 		annotation PBI_FormatHint = {"currencyCulture":"pt-BR"}
 
 	measure vlr_restante_meta =
-
+			
 			[vlr_meta] - [vlr_vendas]
 		formatString: "R$"\ #,0.00;-"R$"\ #,0.00;"R$"\ #,0.00
 		displayFolder: 3. Financeiro
@@ -726,7 +726,7 @@ table Medidas
 		annotation PBI_FormatHint = {"currencyCulture":"pt-BR"}
 
 	measure vlr_venda_media_util_dia =
-
+			
 			DIVIDE(
 			    [vlr_meta] ,
 			    CALCULATE(
@@ -742,7 +742,7 @@ table Medidas
 		annotation PBI_FormatHint = {"currencyCulture":"pt-BR"}
 
 	measure vlr_restante_meta_dia =
-
+			
 			[vlr_venda_media_util_dia] - [vlr_vendas]
 		formatString: "R$"\ #,0.00;-"R$"\ #,0.00;"R$"\ #,0.00
 		displayFolder: 3. Financeiro
@@ -751,7 +751,7 @@ table Medidas
 		annotation PBI_FormatHint = {"currencyCulture":"pt-BR"}
 
 	measure vlr_peso_compra_2 =
-
+			
 			SUMX(
 			    VALUES(
 			        dim_produtos[id_produto]) ,
@@ -783,7 +783,7 @@ table Medidas
 		annotation PBI_FormatHint = {"isGeneralNumber":true}
 
 	measure qtd_comprar_simulacao2 =
-
+			
 			SUMX(
 			    dim_produtos,
 			    MAX(0, [qtd_estoque_cobertura_simulada] - [saldo_estoque_all] - [qtd_pedidos_comprados])
@@ -794,7 +794,7 @@ table Medidas
 		annotation PBI_FormatHint = {"isGeneralNumber":true}
 
 	measure valor_em_estoque =
-
+			
 			SUMX(
 			    ADDCOLUMNS(
 			        VALUES(dim_produtos[cd_produto]),
@@ -818,7 +818,7 @@ table Medidas
 		annotation PBI_FormatHint = {"currencyCulture":"pt-BR"}
 
 	measure Status_Estoque =
-
+			
 			VAR DiasSemVenda = [qtd_venda_media]
 			VAR EstoqueAtual = [saldo_estoque_all]
 			RETURN
@@ -833,7 +833,7 @@ table Medidas
 		lineageTag: 3973036a-b37e-417c-be70-ca166d349b75
 
 	measure percentual_vendas =
-
+			
 			DIVIDE(
 			    [vlr_vendas],
 			    CALCULATE([vlr_vendas], ALLSELECTED(fat_vendas))
@@ -851,7 +851,7 @@ table Medidas
 		lineageTag: c7bed0d4-27d3-455f-a3e4-cced1939f0f3
 
 	measure media_preco_venda =
-
+			
 			CALCULATE(
 			    AVERAGE(dim_produtos[preco_venda]),
 			    ALL(dim_produtos),
@@ -864,7 +864,7 @@ table Medidas
 		annotation PBI_FormatHint = {"currencyCulture":"pt-BR"}
 
 	measure media_preco_compra =
-
+			
 			CALCULATE(
 			    AVERAGE(dim_produtos[preco_compra]),
 			    ALL(dim_produtos),
@@ -877,7 +877,7 @@ table Medidas
 		annotation PBI_FormatHint = {"currencyCulture":"pt-BR"}
 
 	measure %_margem_par =
-
+			
 			IF(
 			    [%_margem_estoque] >= SELECTEDVALUE(par_percent_margem[par_percent_margem]) ,
 			    "S" , "N")
@@ -898,7 +898,7 @@ table Medidas
 		annotation PBI_FormatHint = {"currencyCulture":"pt-BR"}
 
 	measure %_margem_estoque_media =
-
+			
 			VAR precovenda  = [media_preco_venda]
 			VAR precocompra = [media_preco_compra]
 			RETURN
@@ -910,7 +910,7 @@ table Medidas
 		lineageTag: 5e29f85e-b898-4d82-9cb0-9be675d27577
 
 	measure valor_total_estoque =
-
+			
 			VAR PrecoMaximo =
 			    CALCULATE(
 			        MAX(dim_produtos[preco_venda]),
@@ -955,9 +955,9 @@ table Medidas
 		annotation PBI_FormatHint = {"isGeneralNumber":true}
 
 	measure contas_a_pagar =
-
+			
 			CALCULATE(
-			    SUM(fat_caixa[valor]),
+			    SUM(fat_caixa[vlr_lancamento]),
 			    fat_caixa[tipo] = "D",
 			    fat_caixa[status] = "A"
 			)
@@ -968,9 +968,9 @@ table Medidas
 		annotation PBI_FormatHint = {"currencyCulture":"pt-BR"}
 
 	measure contas_a_receber =
-
+			
 			CALCULATE(
-			    SUM(fat_caixa[valor]),
+			    SUM(fat_caixa[vlr_lancamento]),
 			    fat_caixa[tipo] = "C",
 			    fat_caixa[status] = "A"
 			)
@@ -981,7 +981,7 @@ table Medidas
 		annotation PBI_FormatHint = {"currencyCulture":"pt-BR"}
 
 	measure ultimo_preco =
-
+			
 			VAR UltimaData = MAX('Produtos Convert'[dt_pedido])
 			RETURN
 			CALCULATE(
