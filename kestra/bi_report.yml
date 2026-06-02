@@ -1,0 +1,199 @@
+id: ia_aco_norte
+namespace: company.ia
+description: "Relatório BI Aço Norte — envia às 08h e 18h (seg a sab)"
+
+triggers:
+  - id: manha
+    type: io.kestra.plugin.core.trigger.Schedule
+    cron: "0 8 * * 1-6"
+    timezone: America/Sao_Paulo
+  - id: tarde
+    type: io.kestra.plugin.core.trigger.Schedule
+    cron: "0 18 * * 1-6"
+    timezone: America/Sao_Paulo
+
+tasks:
+  - id: gerar_e_enviar
+    type: io.kestra.plugin.scripts.python.Script
+    containerImage: python:3.12-slim
+    beforeCommands:
+      - pip install anthropic msal requests -q
+    env:
+      AZURE_TENANT_ID: "{{ kv('AZURE_TENANT_ID') }}"
+      AZURE_CLIENT_ID: "{{ kv('AZURE_CLIENT_ID') }}"
+      AZURE_CLIENT_SECRET: "{{ kv('AZURE_CLIENT_SECRET') }}"
+      POWERBI_WORKSPACE_ID: "{{ kv('POWERBI_WORKSPACE_ID') }}"
+      POWERBI_DATASET_ID: "{{ kv('POWERBI_DATASET_ID') }}"
+      ANTHROPIC_API_KEY: "{{ kv('ANTHROPIC_API_KEY') }}"
+      EVOLUTION_API_KEY: "{{ kv('EVOLUTION_API_KEY') }}"
+      EVOLUTION_API_URL: "https://elt-evolution-api.xbgiwf.easypanel.host"
+      EVOLUTION_INSTANCE: "api_ia"
+      RECIPIENTS: "5588999588269,5588992239602,5585992163703"
+    script: |
+      import os, json, msal, requests
+      from datetime import datetime
+      import anthropic
+
+      # ── Auth Power BI ────────────────────────────────────────────────────────
+      TENANT = os.environ["AZURE_TENANT_ID"]
+      CLIENT = os.environ["AZURE_CLIENT_ID"]
+      SECRET = os.environ["AZURE_CLIENT_SECRET"]
+      WS_ID  = os.environ["POWERBI_WORKSPACE_ID"]
+      DS_ID  = os.environ["POWERBI_DATASET_ID"]
+
+      msal_app = msal.ConfidentialClientApplication(
+          CLIENT,
+          authority=f"https://login.microsoftonline.com/{TENANT}",
+          client_credential=SECRET,
+      )
+
+      def get_token():
+          r = msal_app.acquire_token_for_client(
+              scopes=["https://analysis.windows.net/powerbi/api/.default"]
+          )
+          if "access_token" not in r:
+              raise RuntimeError(r.get("error_description"))
+          return r["access_token"]
+
+      def dax(query):
+          token = get_token()
+          url = (f"https://api.powerbi.com/v1.0/myorg/groups/{WS_ID}"
+                 f"/datasets/{DS_ID}/executeQueries")
+          resp = requests.post(
+              url,
+              json={"queries": [{"query": query}], "serializerSettings": {"includeNulls": True}},
+              headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
+              timeout=60,
+          )
+          resp.raise_for_status()
+          rows = resp.json()["results"][0]["tables"][0].get("rows", [])
+          return [{k.split("[")[-1].rstrip("]"): v for k, v in row.items()} for row in rows]
+
+      # ── Queries DAX ──────────────────────────────────────────────────────────
+      vendas = dax("""
+      DEFINE
+          VAR _mes = FORMAT(TODAY(), "YYYYMM")
+      EVALUATE
+          CALCULATETABLE(
+              ROW(
+                  "vlr_vendas",           [vlr_vendas],
+                  "vlr_meta",             [vlr_meta],
+                  "vlr_restante_meta",    [vlr_restante_meta],
+                  "pct_margem_bruta",     [%_margem_bruta],
+                  "vlr_margem_bruta",     [vlr_margem_bruta],
+                  "qtd_transacoes",       [qtd_transacoes],
+                  "vlr_ticket_medio",     [vlr_ticket_medio],
+                  "qtd_clientes",         [qtd_clientes],
+                  "qtd_vendedores",       [qtd_vendedores],
+                  "vlr_fat_mes_anterior", [Faturamento Mês Anterior],
+                  "vlr_fat_ano_anterior", [Faturamento Ano Anterior]
+              ),
+              dim_calendario[Anomes] = _mes
+          )
+      """)[0]
+
+      estoque = dax("""
+      EVALUATE
+          ROW(
+              "saldo_estoque_geral",         [saldo_estoque_geral],
+              "vlr_estoque_compra",          [vlr_estoque],
+              "vlr_estoque_venda",           [vlr_estoque_vendas],
+              "qtd_prod_estoque_negativo",   [qtd_produtos_estoque_negativo],
+              "qtd_prod_estoque_zerado",     [qtd_produtos_estoque_zerado],
+              "qtd_prod_sem_venda_30_60d",   [qtd_produtos_sem_venda_mais_30_dias],
+              "qtd_prod_sem_venda_60_90d",   [qtd_produtos_sem_venda_mais_60_dias],
+              "qtd_prod_sem_venda_mais_90d", [qtd_produtos_sem_venda_mais_90_dias],
+              "qtd_pedidos_comprados",       [qtd_pedidos_comprados],
+              "qtd_pedidos_recebidos",       [qtd_pedidos_recebidos]
+          )
+      """)[0]
+
+      financeiro = dax("""
+      DEFINE
+          VAR _mes = FORMAT(TODAY(), "YYYYMM")
+      EVALUATE
+          CALCULATETABLE(
+              ROW(
+                  "vlr_saldo_caixa",  [vlr_saldo_caixa],
+                  "vlr_credito",      [vlr_credito],
+                  "vlr_debito",       [vlr_debito],
+                  "contas_a_pagar",   [contas_a_pagar],
+                  "contas_a_receber", [contas_a_receber],
+                  "vlr_compras_mes",  [vlr_compras_mes],
+                  "cmv_compra",       [cmv_compra]
+              ),
+              dim_calendario[Anomes] = _mes
+          )
+      """)[0]
+
+      # ── Formata valores ──────────────────────────────────────────────────────
+      def cur(v):
+          return f"R$ {float(v):,.2f}".replace(",", "X").replace(".", ",").replace("X", ".") if v is not None else "—"
+
+      def pct(v):
+          return f"{float(v) * 100:.2f}%".replace(".", ",") if v is not None else "—"
+
+      kpi_text = f"""Data/hora: {datetime.now().strftime("%d/%m/%Y %H:%M")}
+
+      === VENDAS (mês atual) ===
+      Faturamento: {cur(vendas.get("vlr_vendas"))}
+      Meta do mês: {cur(vendas.get("vlr_meta"))}
+      Restante para meta: {cur(vendas.get("vlr_restante_meta"))}
+      Margem bruta: {pct(vendas.get("pct_margem_bruta"))} ({cur(vendas.get("vlr_margem_bruta"))})
+      Transações: {vendas.get("qtd_transacoes")} | Ticket médio: {cur(vendas.get("vlr_ticket_medio"))}
+      Clientes: {vendas.get("qtd_clientes")} | Vendedores: {vendas.get("qtd_vendedores")}
+      Mês anterior: {cur(vendas.get("vlr_fat_mes_anterior"))}
+      Ano anterior: {cur(vendas.get("vlr_fat_ano_anterior"))}
+
+      === ESTOQUE ===
+      Saldo total: {estoque.get("saldo_estoque_geral")} unid.
+      Valor (compra): {cur(estoque.get("vlr_estoque_compra"))}
+      Valor (venda): {cur(estoque.get("vlr_estoque_venda"))}
+      Negativos: {estoque.get("qtd_prod_estoque_negativo")} | Zerados: {estoque.get("qtd_prod_estoque_zerado")}
+      Sem venda 30-60d: {estoque.get("qtd_prod_sem_venda_30_60d")}
+      Sem venda 60-90d: {estoque.get("qtd_prod_sem_venda_60_90d")}
+      Sem venda +90d: {estoque.get("qtd_prod_sem_venda_mais_90d")}
+      Pedidos comprados: {estoque.get("qtd_pedidos_comprados")} | Recebidos: {estoque.get("qtd_pedidos_recebidos")}
+
+      === FINANCEIRO (mês atual) ===
+      Saldo caixa: {cur(financeiro.get("vlr_saldo_caixa"))}
+      Entradas: {cur(financeiro.get("vlr_credito"))} | Saídas: {cur(financeiro.get("vlr_debito"))}
+      Contas a pagar: {cur(financeiro.get("contas_a_pagar"))}
+      Contas a receber: {cur(financeiro.get("contas_a_receber"))}
+      Compras no mês: {cur(financeiro.get("vlr_compras_mes"))} | CMV: {cur(financeiro.get("cmv_compra"))}"""
+
+      # ── Claude ───────────────────────────────────────────────────────────────
+      ai = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
+      msg = ai.messages.create(
+          model="claude-sonnet-4-6",
+          max_tokens=1024,
+          system="""Você é o assistente de BI da Aço Norte, distribuidora de aços.
+      Transforme os dados em relatório para WhatsApp.
+      Regras obrigatórias:
+      - Português do Brasil
+      - Emojis relevantes para facilitar leitura visual
+      - Sem markdown (sem **, ##, ---) — WhatsApp não renderiza
+      - Valores: R$ 1.234,56 | Percentuais: 12,34%
+      - Máximo 60 caracteres por linha
+      Estrutura: saudação + data | VENDAS | ESTOQUE | FINANCEIRO | ponto de atenção do dia""",
+          messages=[{"role": "user", "content": f"Gere o relatório com os dados:\n{kpi_text}"}],
+      )
+      report = msg.content[0].text
+      print("Relatório gerado.")
+
+      # ── WhatsApp ─────────────────────────────────────────────────────────────
+      evo_url  = os.environ["EVOLUTION_API_URL"]
+      evo_key  = os.environ["EVOLUTION_API_KEY"]
+      instance = os.environ["EVOLUTION_INSTANCE"]
+      headers  = {"apikey": evo_key, "Content-Type": "application/json"}
+
+      for num in os.environ["RECIPIENTS"].split(","):
+          num = num.strip()
+          r = requests.post(
+              f"{evo_url}/message/sendText/{instance}",
+              json={"number": num, "text": report, "delay": 1200},
+              headers=headers,
+              timeout=30,
+          )
+          status = "✓" if r.ok else "✗"
+          print(f"{status} Enviado para {num}: HTTP {r.status_code}")
