@@ -16,17 +16,25 @@ _EXECUTE_URL = (
     f"/datasets/{POWERBI_DATASET_ID}/executeQueries"
 )
 
-_msal_app = msal.ConfidentialClientApplication(
-    AZURE_CLIENT_ID,
-    authority=_AUTHORITY,
-    client_credential=AZURE_CLIENT_SECRET,
-)
+_msal_app: msal.ConfidentialClientApplication | None = None
+
+
+def _get_msal_app() -> msal.ConfidentialClientApplication:
+    global _msal_app
+    if _msal_app is None:
+        _msal_app = msal.ConfidentialClientApplication(
+            AZURE_CLIENT_ID,
+            authority=_AUTHORITY,
+            client_credential=AZURE_CLIENT_SECRET,
+        )
+    return _msal_app
 
 
 def _get_token() -> str:
-    result = _msal_app.acquire_token_silent(_SCOPE, account=None)
+    app = _get_msal_app()
+    result = app.acquire_token_silent(_SCOPE, account=None)
     if not result:
-        result = _msal_app.acquire_token_for_client(scopes=_SCOPE)
+        result = app.acquire_token_for_client(scopes=_SCOPE)
     if "access_token" not in result:
         raise RuntimeError(f"Falha ao obter token Power BI: {result.get('error_description')}")
     return result["access_token"]

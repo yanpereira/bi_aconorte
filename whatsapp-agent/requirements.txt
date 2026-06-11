@@ -3,3 +3,5 @@ msal>=1.28.0
 requests>=2.32.0
 python-dotenv>=1.0.0
 APScheduler>=3.10.4
+fastapi>=0.115.0
+uvicorn[standard]>=0.30.0

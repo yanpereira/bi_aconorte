@@ -26,3 +26,7 @@ WHATSAPP_RECIPIENTS = [r.strip() for r in os.environ["WHATSAPP_RECIPIENTS"].spli
 # Scheduler
 REPORT_TIMES = [t.strip() for t in os.getenv("REPORT_TIMES", "08:00").split(",")]
 TIMEZONE     = os.getenv("TIMEZONE", "America/Sao_Paulo")
+
+# Webhook
+WEBHOOK_PORT  = int(os.getenv("WEBHOOK_PORT", "8000"))
+WEBHOOK_TOKEN = os.getenv("WEBHOOK_TOKEN", "")

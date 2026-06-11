@@ -1,26 +1,32 @@
 """
 Agente BI → WhatsApp — Aço Norte
 
-Fluxo:
+Fluxo agendado:
   1. Busca KPIs do Power BI via REST API (DAX queries)
   2. Envia para o Claude (Anthropic) gerar o relatório em linguagem natural
   3. Distribui o relatório via Evolution API (WhatsApp)
 
-Execução agendada via APScheduler conforme REPORT_TIMES no .env.
-Também pode ser disparado manualmente: python main.py --now
+Webhook conversacional:
+  - Recebe mensagens dos destinatários via Evolution API
+  - Responde usando Claude com acesso aos dados do Power BI
+
+Execução: python main.py
+Execução imediata do relatório: python main.py --now
 """
 import argparse
 import logging
 import sys
 from datetime import datetime
 
-from apscheduler.schedulers.blocking import BlockingScheduler
+import uvicorn
+from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
 
 import config
 from agent.powerbi_client import get_all_kpis
 from agent.llm_client import generate_report
 from agent.whatsapp_client import broadcast, check_instance
+from agent.webhook_server import app
 
 logging.basicConfig(
     level=logging.INFO,
@@ -61,7 +67,6 @@ def run_report() -> None:
 
 
 def _parse_cron(time_str: str) -> tuple[str, str]:
-    """Converte 'HH:MM' em (hora, minuto) para o CronTrigger."""
     hour, minute = time_str.split(":")
     return hour, minute
 
@@ -78,8 +83,8 @@ def main() -> None:
         run_report()
         return
 
-    scheduler = BlockingScheduler(timezone=config.TIMEZONE)
-
+    # Scheduler em background (relatórios agendados)
+    scheduler = BackgroundScheduler(timezone=config.TIMEZONE)
     for time_str in config.REPORT_TIMES:
         hour, minute = _parse_cron(time_str)
         scheduler.add_job(
@@ -91,11 +96,16 @@ def main() -> None:
         )
         log.info("Relatório agendado para %s (TZ: %s)", time_str, config.TIMEZONE)
 
-    log.info("Scheduler iniciado. Aguardando próximo horário...")
+    scheduler.start()
+    log.info("Scheduler iniciado em background.")
+
+    # Webhook server em foreground
+    log.info("Webhook iniciado na porta %d — aguardando mensagens...", config.WEBHOOK_PORT)
     try:
-        scheduler.start()
+        uvicorn.run(app, host="0.0.0.0", port=config.WEBHOOK_PORT, log_level="info")
     except KeyboardInterrupt:
         log.info("Encerrado pelo usuário.")
+        scheduler.shutdown()
         sys.exit(0)
 
 

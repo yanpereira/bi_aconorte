@@ -1,0 +1,277 @@
+id: whatsapp_chat
+namespace: company.ia
+description: "Chat com BI via Claude — responde mensagens do WhatsApp"
+
+triggers:
+  - id: webhook
+    type: io.kestra.plugin.core.trigger.Webhook
+    key: aconorte_chat_2024
+
+tasks:
+  - id: responder
+    type: io.kestra.plugin.scripts.python.Script
+    containerImage: python:3.12-slim
+    beforeCommands:
+      - pip install anthropic msal requests -q
+    inputFiles:
+      payload.json: "{{ trigger.body | json }}"
+    env:
+      AZURE_TENANT_ID: "{{ kv('AZURE_TENANT_ID') }}"
+      AZURE_CLIENT_ID: "{{ kv('AZURE_CLIENT_ID') }}"
+      AZURE_CLIENT_SECRET: "{{ kv('AZURE_CLIENT_SECRET') }}"
+      POWERBI_WORKSPACE_ID: "{{ kv('POWERBI_WORKSPACE_ID') }}"
+      POWERBI_DATASET_ID: "{{ kv('POWERBI_DATASET_ID') }}"
+      ANTHROPIC_API_KEY: "{{ kv('ANTHROPIC_API_KEY') }}"
+      EVOLUTION_API_KEY: "{{ kv('EVOLUTION_API_KEY') }}"
+      EVOLUTION_API_URL: "https://elt-evolution-api.xbgiwf.easypanel.host"
+      EVOLUTION_INSTANCE: "api_ia"
+      RECIPIENTS: "5588999588269,5588992239602,5585992163703"
+    script: |
+      import os, json, msal, requests
+      import anthropic
+
+      # ── Carrega payload ─────────────────────────────────────────────────────
+      with open("payload.json") as f:
+          raw = f.read()
+
+      print(f"[DEBUG] payload bruto: {raw[:300]}")
+      payload = json.loads(raw)
+
+      data = payload.get("data", {})
+      key  = data.get("key", {})
+
+      # Ignora mensagens próprias
+      if key.get("fromMe"):
+          print("Mensagem própria ignorada.")
+          exit(0)
+
+      remote_jid = key.get("remoteJid", "")
+      sender     = remote_jid.split("@")[0]
+
+      def br_variants(n):
+          """Gera variantes 12/13 dígitos para números brasileiros (55+DDD+número)."""
+          d = "".join(filter(str.isdigit, n))
+          s = {d}
+          if len(d) == 13 and d.startswith("55"):
+              s.add(d[:4] + d[5:])   # remove o 9 extra: 5585_9_92163703 → 558592163703
+          elif len(d) == 12 and d.startswith("55"):
+              s.add(d[:4] + "9" + d[4:])  # adiciona o 9: 558592163703 → 5585992163703
+          return s
+
+      sender_digits = "".join(filter(str.isdigit, sender))
+      authorized_set = set()
+      for r in os.environ.get("RECIPIENTS", "").split(","):
+          authorized_set |= br_variants(r.strip())
+
+      print(f"[DEBUG] sender={sender_digits!r} authorized={sorted(authorized_set)}")
+
+      if sender_digits not in authorized_set:
+          print(f"Remetente não autorizado: {sender_digits}")
+          exit(0)
+
+      msg_obj = data.get("message", {})
+      text = (
+          msg_obj.get("conversation")
+          or msg_obj.get("extendedTextMessage", {}).get("text")
+          or ""
+      ).strip()
+
+      if not text:
+          print("Mensagem sem texto ignorada.")
+          exit(0)
+
+      print(f"Mensagem de {sender_digits}: {text[:80]}")
+
+      # ── Power BI ────────────────────────────────────────────────────────────
+      TENANT = os.environ["AZURE_TENANT_ID"]
+      CLIENT = os.environ["AZURE_CLIENT_ID"]
+      SECRET = os.environ["AZURE_CLIENT_SECRET"]
+      WS_ID  = os.environ["POWERBI_WORKSPACE_ID"]
+      DS_ID  = os.environ["POWERBI_DATASET_ID"]
+
+      _msal = msal.ConfidentialClientApplication(
+          CLIENT,
+          authority=f"https://login.microsoftonline.com/{TENANT}",
+          client_credential=SECRET,
+      )
+
+      def get_token():
+          r = _msal.acquire_token_for_client(
+              scopes=["https://analysis.windows.net/powerbi/api/.default"]
+          )
+          if "access_token" not in r:
+              raise RuntimeError(r.get("error_description"))
+          return r["access_token"]
+
+      def dax(query):
+          token = get_token()
+          url = (f"https://api.powerbi.com/v1.0/myorg/groups/{WS_ID}"
+                 f"/datasets/{DS_ID}/executeQueries")
+          resp = requests.post(
+              url,
+              json={"queries": [{"query": query}], "serializerSettings": {"includeNulls": True}},
+              headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
+              timeout=60,
+          )
+          resp.raise_for_status()
+          rows = resp.json()["results"][0]["tables"][0].get("rows", [])
+          return [{k.split("[")[-1].rstrip("]"): v for k, v in row.items()} for row in rows]
+
+      def cur(v):
+          return f"R$ {float(v):,.2f}".replace(",", "X").replace(".", ",").replace("X", ".") if v is not None else "—"
+
+      def pct(v):
+          return f"{float(v) * 100:.2f}%".replace(".", ",") if v is not None else "—"
+
+      def fetch_bi_data():
+          from datetime import datetime
+          try:
+              vendas = dax("""
+              DEFINE VAR _mes = FORMAT(TODAY(), "YYYYMM")
+              EVALUATE CALCULATETABLE(ROW(
+                  "vlr_vendas",[vlr_vendas],"vlr_meta",[vlr_meta],
+                  "vlr_restante_meta",[vlr_restante_meta],"pct_margem_bruta",[%_margem_bruta],
+                  "vlr_margem_bruta",[vlr_margem_bruta],"qtd_transacoes",[qtd_transacoes],
+                  "vlr_ticket_medio",[vlr_ticket_medio],"qtd_clientes",[qtd_clientes],
+                  "qtd_vendedores",[qtd_vendedores],
+                  "vlr_fat_mes_anterior",[Faturamento Mês Anterior],
+                  "vlr_fat_ano_anterior",[Faturamento Ano Anterior]
+              ), dim_calendario[Anomes] = _mes)""")[0]
+
+              estoque = dax("""
+              EVALUATE ROW(
+                  "saldo_estoque_geral",[saldo_estoque_geral],
+                  "vlr_estoque_compra",[vlr_estoque],"vlr_estoque_venda",[vlr_estoque_vendas],
+                  "qtd_prod_estoque_negativo",[qtd_produtos_estoque_negativo],
+                  "qtd_prod_estoque_zerado",[qtd_produtos_estoque_zerado],
+                  "qtd_prod_sem_venda_30_60d",[qtd_produtos_sem_venda_mais_30_dias],
+                  "qtd_prod_sem_venda_60_90d",[qtd_produtos_sem_venda_mais_60_dias],
+                  "qtd_prod_sem_venda_mais_90d",[qtd_produtos_sem_venda_mais_90_dias],
+                  "qtd_pedidos_comprados",[qtd_pedidos_comprados],
+                  "qtd_pedidos_recebidos",[qtd_pedidos_recebidos])""")[0]
+
+              financeiro = dax("""
+              DEFINE VAR _mes = FORMAT(TODAY(), "YYYYMM")
+              EVALUATE CALCULATETABLE(ROW(
+                  "vlr_saldo_caixa",[vlr_saldo_caixa],"vlr_credito",[vlr_credito],
+                  "vlr_debito",[vlr_debito],"contas_a_pagar",[contas_a_pagar],
+                  "contas_a_receber",[contas_a_receber],"vlr_compras_mes",[vlr_compras_mes],
+                  "cmv_compra",[cmv_compra]
+              ), dim_calendario[Anomes] = _mes)""")[0]
+
+              return json.dumps({
+                  "data_hora": datetime.now().strftime("%d/%m/%Y %H:%M"),
+                  "vendas": {
+                      "Faturamento": cur(vendas.get("vlr_vendas")),
+                      "Meta do mês": cur(vendas.get("vlr_meta")),
+                      "Restante para meta": cur(vendas.get("vlr_restante_meta")),
+                      "Margem bruta": pct(vendas.get("pct_margem_bruta")),
+                      "Margem R$": cur(vendas.get("vlr_margem_bruta")),
+                      "Transações": vendas.get("qtd_transacoes"),
+                      "Ticket médio": cur(vendas.get("vlr_ticket_medio")),
+                      "Clientes ativos": vendas.get("qtd_clientes"),
+                      "Vendedores ativos": vendas.get("qtd_vendedores"),
+                      "Faturamento mês ant.": cur(vendas.get("vlr_fat_mes_anterior")),
+                      "Faturamento ano ant.": cur(vendas.get("vlr_fat_ano_anterior")),
+                  },
+                  "estoque": {
+                      "Saldo total (qtd)": estoque.get("saldo_estoque_geral"),
+                      "Valor estoque (compra)": cur(estoque.get("vlr_estoque_compra")),
+                      "Valor estoque (venda)": cur(estoque.get("vlr_estoque_venda")),
+                      "Prod. estoque negativo": estoque.get("qtd_prod_estoque_negativo"),
+                      "Prod. estoque zerado": estoque.get("qtd_prod_estoque_zerado"),
+                      "Sem venda 30-60d": estoque.get("qtd_prod_sem_venda_30_60d"),
+                      "Sem venda 60-90d": estoque.get("qtd_prod_sem_venda_60_90d"),
+                      "Sem venda +90d": estoque.get("qtd_prod_sem_venda_mais_90d"),
+                      "Pedidos em aberto": estoque.get("qtd_pedidos_comprados"),
+                      "Pedidos recebidos": estoque.get("qtd_pedidos_recebidos"),
+                  },
+                  "financeiro": {
+                      "Saldo caixa": cur(financeiro.get("vlr_saldo_caixa")),
+                      "Entradas": cur(financeiro.get("vlr_credito")),
+                      "Saídas": cur(financeiro.get("vlr_debito")),
+                      "Contas a pagar": cur(financeiro.get("contas_a_pagar")),
+                      "Contas a receber": cur(financeiro.get("contas_a_receber")),
+                      "Compras no mês": cur(financeiro.get("vlr_compras_mes")),
+                      "CMV": cur(financeiro.get("cmv_compra")),
+                  },
+              }, ensure_ascii=False, indent=2)
+          except Exception as exc:
+              return json.dumps({"erro": f"Não foi possível buscar os dados: {exc}"})
+
+      # ── Claude com tool use ─────────────────────────────────────────────────
+      from datetime import datetime
+      import locale
+      try:
+          locale.setlocale(locale.LC_TIME, "pt_BR.UTF-8")
+      except Exception:
+          pass
+      hoje = datetime.now().strftime("%d/%m/%Y")
+      dia_semana = ["segunda-feira","terça-feira","quarta-feira","quinta-feira","sexta-feira","sábado","domingo"][datetime.now().weekday()]
+
+      ai = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
+
+      SYSTEM = f"""Contexto: hoje é {dia_semana}, {hoje}. Horário atual: {datetime.now().strftime("%H:%M")} (fuso: America/Fortaleza).
+
+      Você é um assistente inteligente da Aço Norte, distribuidora de aços do Ceará.
+      Responda qualquer tipo de pergunta — geral, técnica, sobre o negócio ou sobre dados.
+
+      Comportamento:
+      - Responda diretamente, sem apresentações nem frases de robô
+      - Linguagem profissional e natural, como uma pessoa real respondendo por mensagem
+      - Para perguntas simples: respostas curtas
+      - Para perguntas sobre dados do negócio (vendas, estoque, financeiro): use get_bi_data
+      - Se não souber algo, diga claramente — nunca invente informação
+      - Sem markdown (sem **, ##, ---): WhatsApp não renderiza
+      - Sem listas com traços — escreva em texto corrido
+      - Valores monetários: R$ 1.234,56 | Percentuais: 12,34%
+      """
+
+      BI_TOOL = {
+          "name": "get_bi_data",
+          "description": (
+              "Busca KPIs atuais do Power BI: vendas do mês, estoque e financeiro. "
+              "Use quando o usuário perguntar sobre números, metas, faturamento, "
+              "estoque, caixa ou qualquer dado do negócio."
+          ),
+          "input_schema": {"type": "object", "properties": {}, "required": []},
+      }
+
+      messages = [{"role": "user", "content": text}]
+
+      for _ in range(5):
+          response = ai.messages.create(
+              model="claude-sonnet-4-6",
+              max_tokens=1024,
+              system=SYSTEM,
+              tools=[BI_TOOL],
+              messages=messages,
+          )
+
+          if response.stop_reason == "tool_use":
+              tool_block = next(b for b in response.content if b.type == "tool_use")
+              print("Buscando dados do Power BI...")
+              bi_result = fetch_bi_data()
+              messages.append({"role": "assistant", "content": response.content})
+              messages.append({
+                  "role": "user",
+                  "content": [{"type": "tool_result", "tool_use_id": tool_block.id, "content": bi_result}],
+              })
+          else:
+              reply_text = next((b.text for b in response.content if b.type == "text"), "")
+              break
+      else:
+          reply_text = "Desculpe, não consegui processar agora. Tente novamente."
+
+      # ── Envia resposta ──────────────────────────────────────────────────────
+      evo_url  = os.environ["EVOLUTION_API_URL"]
+      evo_key  = os.environ["EVOLUTION_API_KEY"]
+      instance = os.environ["EVOLUTION_INSTANCE"]
+
+      r = requests.post(
+          f"{evo_url}/message/sendText/{instance}",
+          json={"number": remote_jid, "text": reply_text, "delay": 1200},
+          headers={"apikey": evo_key, "Content-Type": "application/json"},
+          timeout=30,
+      )
+      print(f"Resposta enviada para {sender}: HTTP {r.status_code}")
