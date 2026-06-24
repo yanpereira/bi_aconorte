@@ -30,3 +30,12 @@ TIMEZONE     = os.getenv("TIMEZONE", "America/Sao_Paulo")
 # Webhook
 WEBHOOK_PORT  = int(os.getenv("WEBHOOK_PORT", "8000"))
 WEBHOOK_TOKEN = os.getenv("WEBHOOK_TOKEN", "")
+
+# MinIO
+SAVE_MINIO_COPY  = os.getenv("SAVE_MINIO_COPY", "false").lower() == "true"
+MINIO_ENDPOINT   = os.getenv("MINIO_ENDPOINT", "")
+MINIO_ACCESS_KEY = os.getenv("MINIO_ACCESS_KEY", "")
+MINIO_SECRET_KEY = os.getenv("MINIO_SECRET_KEY", "")
+MINIO_SECURE     = os.getenv("MINIO_SECURE", "true").lower() == "true"
+MINIO_BUCKET     = os.getenv("MINIO_BUCKET", "aconorte")
+MINIO_PREFIX     = os.getenv("MINIO_PREFIX", "")

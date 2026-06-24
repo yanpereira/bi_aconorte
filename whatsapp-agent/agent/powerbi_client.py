@@ -1,13 +1,19 @@
 """
 Autentica com Power BI via Service Principal (MSAL) e executa queries DAX
 contra o dataset do modelo semântico da Aço Norte.
+
+Fonte primária: MinIO (dados já transferidos pelo pipeline de BI).
+Fallback: Power BI REST API (MSAL + DAX).
 """
+import logging
 import msal
 import requests
 from config import (
     AZURE_TENANT_ID, AZURE_CLIENT_ID, AZURE_CLIENT_SECRET,
-    POWERBI_WORKSPACE_ID, POWERBI_DATASET_ID,
+    POWERBI_WORKSPACE_ID, POWERBI_DATASET_ID, SAVE_MINIO_COPY,
 )
+
+log = logging.getLogger(__name__)
 
 _AUTHORITY  = f"https://login.microsoftonline.com/{AZURE_TENANT_ID}"
 _SCOPE      = ["https://analysis.windows.net/powerbi/api/.default"]
@@ -117,12 +123,35 @@ EVALUATE
 
 
 def get_all_kpis() -> dict:
-    """Retorna todos os KPIs do modelo agrupados por domínio."""
+    """
+    Retorna todos os KPIs agrupados por domínio.
+    Fonte primária: MinIO.  Fallback: Power BI API.
+    """
+    # 1 — tenta MinIO primeiro (mais rápido, sem dependência Azure)
+    try:
+        from agent.minio_client import get_kpis
+        kpis = get_kpis()
+        log.info("KPIs obtidos do MinIO.")
+        return kpis
+    except Exception as exc:
+        log.warning("MinIO indisponível (%s). Consultando Power BI API...", exc)
+
+    # 2 — Power BI REST API
     vendas     = execute_dax(_DAX_VENDAS_MES)
     estoque    = execute_dax(_DAX_ESTOQUE)
     financeiro = execute_dax(_DAX_FINANCEIRO)
-    return {
+    kpis = {
         "vendas":     vendas[0]     if vendas     else {},
         "estoque":    estoque[0]    if estoque    else {},
         "financeiro": financeiro[0] if financeiro else {},
     }
+
+    # Salva cópia no MinIO para próximas consultas
+    if SAVE_MINIO_COPY:
+        try:
+            from agent.minio_client import save_kpis
+            save_kpis(kpis)
+        except Exception as exc:
+            log.warning("Falha ao salvar cópia no MinIO: %s", exc)
+
+    return kpis

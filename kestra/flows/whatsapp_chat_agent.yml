@@ -1,0 +1,184 @@
+id: whatsapp_chat_agent
+namespace: aconorte
+
+# ── Documentação ──────────────────────────────────────────────────────────────
+# Flow passivo: só executa quando a Evolution API envia uma mensagem.
+# URL do webhook (configure na Evolution API):
+#   https://<seu-kestra>.easypanel.host/api/v1/executions/webhook/aconorte/whatsapp_chat_agent/aconorte_webhook_2024
+# ─────────────────────────────────────────────────────────────────────────────
+
+triggers:
+  - id: evolution_webhook
+    type: io.kestra.plugin.core.trigger.Webhook
+    key: aconorte_webhook_2024   # mesmo valor do WEBHOOK_TOKEN no .env
+
+tasks:
+
+  # ── 1. Valida payload e lê KPIs do MinIO ──────────────────────────────────
+  - id: process_message
+    type: io.kestra.plugin.scripts.python.Script
+    containerImage: python:3.12-slim
+    beforeCommands:
+      - pip install --quiet anthropic minio requests
+    env:
+      ANTHROPIC_API_KEY: "{{ secret('ANTHROPIC_API_KEY') }}"
+      MINIO_ENDPOINT: "elt-minio.xbgiwf.easypanel.host"
+      MINIO_ACCESS_KEY: "{{ secret('MINIO_ACCESS_KEY') }}"
+      MINIO_SECRET_KEY: "{{ secret('MINIO_SECRET_KEY') }}"
+      MINIO_BUCKET: "aconorte"
+      EVOLUTION_API_URL: "https://elt-evolution-api.xbgiwf.easypanel.host"
+      EVOLUTION_API_KEY: "{{ secret('EVOLUTION_API_KEY') }}"
+      EVOLUTION_INSTANCE: "api_ia"
+      RECIPIENTS: "5588999588269,5588992239602,5585992163703"
+    inputFiles:
+      payload.json: "{{ trigger.body }}"
+    script: |
+      import json, os, sys
+      from kestra import Kestra
+
+      # ── Parse do payload da Evolution API ───────────────────────────────
+      with open("payload.json") as f:
+          payload = json.load(f)
+
+      event = payload.get("event", "")
+      if event != "messages.upsert":
+          Kestra.outputs({"status": "ignored", "remote_jid": "", "reply": ""})
+          sys.exit(0)
+
+      data    = payload.get("data", {})
+      key     = data.get("key", {})
+      message = data.get("message", {})
+
+      if key.get("fromMe"):
+          Kestra.outputs({"status": "ignored", "remote_jid": "", "reply": ""})
+          sys.exit(0)
+
+      remote_jid = key.get("remoteJid", "")
+      sender     = remote_jid.split("@")[0]
+      authorized = set(os.environ["RECIPIENTS"].split(","))
+
+      if sender not in authorized:
+          Kestra.outputs({"status": "ignored", "remote_jid": "", "reply": ""})
+          sys.exit(0)
+
+      text = (
+          message.get("conversation")
+          or message.get("extendedTextMessage", {}).get("text")
+          or ""
+      ).strip()
+
+      if not text:
+          Kestra.outputs({"status": "ignored", "remote_jid": "", "reply": ""})
+          sys.exit(0)
+
+      print(f"Mensagem de {sender}: {text[:80]}")
+
+      # ── KPIs do MinIO ───────────────────────────────────────────────────
+      from minio import Minio
+      from minio.error import S3Error
+
+      def fmt_currency(v):
+          if v is None: return "—"
+          return f"R$ {float(v):,.2f}".replace(",","X").replace(".","," ).replace("X",".")
+
+      def fmt_pct(v):
+          if v is None: return "—"
+          return f"{float(v)*100:.2f}%".replace(".",",")
+
+      minio_client = Minio(
+          os.environ["MINIO_ENDPOINT"],
+          access_key=os.environ["MINIO_ACCESS_KEY"],
+          secret_key=os.environ["MINIO_SECRET_KEY"],
+          secure=True,
+      )
+      bucket = os.environ["MINIO_BUCKET"]
+
+      kpis = {}
+      # Tenta sequência de nomes de arquivo
+      candidates = ["kpis.json", "vendas.json", "latest.json"]
+      for name in candidates:
+          try:
+              resp = minio_client.get_object(bucket, name)
+              kpis = json.loads(resp.read().decode("utf-8"))
+              resp.close()
+              print(f"KPIs lidos de {name}")
+              break
+          except S3Error:
+              continue
+
+      # Formata contexto para o Claude
+      vendas    = kpis.get("vendas", {})
+      estoque   = kpis.get("estoque", {})
+      financeiro= kpis.get("financeiro", {})
+
+      contexto = f"""=== VENDAS (mês atual) ===
+      Faturamento:       {fmt_currency(vendas.get('vlr_vendas'))}
+      Meta:              {fmt_currency(vendas.get('vlr_meta'))}
+      Restante meta:     {fmt_currency(vendas.get('vlr_restante_meta'))}
+      Margem bruta:      {fmt_pct(vendas.get('pct_margem_bruta'))}
+      Ticket médio:      {fmt_currency(vendas.get('vlr_ticket_medio'))}
+      Transações:        {vendas.get('qtd_transacoes')}
+      Clientes ativos:   {vendas.get('qtd_clientes')}
+
+      === ESTOQUE ===
+      Saldo total:           {estoque.get('saldo_estoque_geral')}
+      Valor compra:          {fmt_currency(estoque.get('vlr_estoque_compra'))}
+      Valor venda:           {fmt_currency(estoque.get('vlr_estoque_venda'))}
+      Prod. estoque negativo:{estoque.get('qtd_prod_estoque_negativo')}
+      Prod. zerados:         {estoque.get('qtd_prod_estoque_zerado')}
+      Sem venda +90d:        {estoque.get('qtd_prod_sem_venda_mais_90d')}
+
+      === FINANCEIRO ===
+      Saldo caixa:    {fmt_currency(financeiro.get('vlr_saldo_caixa'))}
+      Entradas:       {fmt_currency(financeiro.get('vlr_credito'))}
+      Saídas:         {fmt_currency(financeiro.get('vlr_debito'))}
+      Contas a pagar: {fmt_currency(financeiro.get('contas_a_pagar'))}
+      Contas a receber:{fmt_currency(financeiro.get('contas_a_receber'))}
+      """ if kpis else "Dados do BI indisponíveis no momento."
+
+      # ── Gera resposta com Claude ─────────────────────────────────────────
+      import anthropic
+
+      claude = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
+
+      system = """Você é o assistente de BI da Aço Norte, distribuidora de aços do Ceará.
+      Responda em português do Brasil, de forma direta e amigável para WhatsApp.
+      Regras:
+      - Não use markdown (sem **, ##, ---) — WhatsApp não renderiza
+      - Use emojis com moderação
+      - Valores monetários: R$ 1.234,56 | Percentuais: 12,34%
+      - Máximo 60 caracteres por linha
+
+      Dados atuais do BI:
+      """ + contexto
+
+      response = claude.messages.create(
+          model="claude-sonnet-4-6",
+          max_tokens=512,
+          system=system,
+          messages=[{"role": "user", "content": text}],
+      )
+      reply = response.content[0].text
+      print(f"Resposta gerada ({len(reply)} chars)")
+
+      Kestra.outputs({
+          "status": "replied",
+          "remote_jid": remote_jid,
+          "reply": reply,
+      })
+
+  # ── 2. Envia resposta via Evolution API (só se houve resposta) ─────────────
+  - id: send_reply
+    type: io.kestra.plugin.core.http.Request
+    runIf: "{{ outputs.process_message.vars.status == 'replied' }}"
+    uri: "{{ secret('EVOLUTION_API_URL') }}/message/sendText/{{ secret('EVOLUTION_INSTANCE') }}"
+    method: POST
+    headers:
+      apikey: "{{ secret('EVOLUTION_API_KEY') }}"
+      Content-Type: application/json
+    body: |
+      {
+        "number": "{{ outputs.process_message.vars.remote_jid }}",
+        "text": {{ outputs.process_message.vars.reply | json }},
+        "delay": 1200
+      }
