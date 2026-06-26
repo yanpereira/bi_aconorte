@@ -27,7 +27,7 @@ tasks:
       MINIO_SECRET_KEY: "password"
       MINIO_BUCKET: "aconorte"
       EVOLUTION_API_URL: "https://elt-evolution-api.xbgiwf.easypanel.host"
-      EVOLUTION_API_KEY: "429683C4C977415CAAFCCE10F7D57E11"
+      EVOLUTION_API_KEY: "{{ kv('EVOLUTION_API_KEY') }}"
       EVOLUTION_INSTANCE: "api_ia"
       RECIPIENTS: "5588999588269,5588992239602,5585992163703"
     inputFiles:
@@ -225,7 +225,7 @@ tasks:
     uri: "https://elt-evolution-api.xbgiwf.easypanel.host/message/sendText/api_ia"
     method: POST
     headers:
-      apikey: "429683C4C977415CAAFCCE10F7D57E11"
+      apikey: "{{ kv('EVOLUTION_API_KEY') }}"
       Content-Type: application/json
     body: |
       {
