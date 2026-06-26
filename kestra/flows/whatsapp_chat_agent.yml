@@ -21,13 +21,13 @@ tasks:
     beforeCommands:
       - pip install --quiet anthropic minio requests
     env:
-      ANTHROPIC_API_KEY: "{{ secret('ANTHROPIC_API_KEY') }}"
+      ANTHROPIC_API_KEY: "{{ kv('ANTHROPIC_API_KEY') }}"
       MINIO_ENDPOINT: "elt-minio.xbgiwf.easypanel.host"
-      MINIO_ACCESS_KEY: "{{ secret('MINIO_ACCESS_KEY') }}"
-      MINIO_SECRET_KEY: "{{ secret('MINIO_SECRET_KEY') }}"
+      MINIO_ACCESS_KEY: "admin"
+      MINIO_SECRET_KEY: "password"
       MINIO_BUCKET: "aconorte"
       EVOLUTION_API_URL: "https://elt-evolution-api.xbgiwf.easypanel.host"
-      EVOLUTION_API_KEY: "{{ secret('EVOLUTION_API_KEY') }}"
+      EVOLUTION_API_KEY: "429683C4C977415CAAFCCE10F7D57E11"
       EVOLUTION_INSTANCE: "api_ia"
       RECIPIENTS: "5588999588269,5588992239602,5585992163703"
     inputFiles:
@@ -143,13 +143,64 @@ tasks:
 
       system = """Você é o assistente de BI da Aço Norte, distribuidora de aços do Ceará.
       Responda em português do Brasil, de forma direta e amigável para WhatsApp.
-      Regras:
+
+      Regras de formatação:
       - Não use markdown (sem **, ##, ---) — WhatsApp não renderiza
       - Use emojis com moderação
       - Valores monetários: R$ 1.234,56 | Percentuais: 12,34%
       - Máximo 60 caracteres por linha
 
-      Dados atuais do BI:
+      == MODELO DE NEGÓCIO DA ACO NORTE ==
+
+      A Aço Norte é uma distribuidora de aços do Ceará. O BI possui 4 pilares:
+      Vendas, Estoque/Movimentações, Financeiro e Pedidos de Compra.
+
+      MÉTRICAS DE VENDAS:
+      - vlr_vendas: faturamento bruto (soma de vlr_venda_total)
+      - vlr_margem_bruta: faturamento menos custo (lucro bruto em R$)
+      - %_margem_bruta: margem dividida pelo faturamento
+      - vlr_ticket_medio: faturamento ÷ número de notas/pedidos
+      - vlr_meta: meta mensal de faturamento (tabela Metas)
+      - vlr_restante_meta: quanto falta para a meta (negativo = superou)
+      - qtd_transacoes: número de notas/pedidos distintos
+      - qtd_clientes: clientes distintos que compraram
+      - Faturamento Mês Anterior / Ano Anterior: comparativos temporais
+
+      MÉTRICAS DE ESTOQUE:
+      - saldo_estoque_geral: posição atual em quantidade
+      - vlr_estoque (compra): estoque valorado pelo preço de compra
+      - vlr_estoque_vendas: estoque valorado pelo preço de venda
+      - qtd_produtos_estoque_negativo: inconsistência / venda a descoberto
+      - qtd_produtos_estoque_zerado: ruptura de estoque
+      - Sem venda 30-60d / 60-90d / +90d: faixas de produtos parados
+      - situacao_abastecer_estoque: "Comprar urgentemente" (< 2 meses sem pedido),
+        "Comprar quando possível" (≥ 2 meses sem pedido),
+        "Aguardando recebimento" (pedido aberto),
+        "Verificar real situação" (estoque negativo)
+      - qtd_meses_capacidade_estoque: meses de cobertura = (estoque + pedidos) ÷ venda média mensal
+
+      MÉTRICAS FINANCEIRAS:
+      - vlr_credito: entradas de caixa (tipo C, efetivadas)
+      - vlr_debito: saídas de caixa (tipo D, efetivadas)
+      - vlr_saldo_caixa: créditos − débitos
+      - contas_a_pagar: débitos em aberto (status A)
+      - contas_a_receber: créditos em aberto (status A)
+      - cmv_compra: Custo das Mercadorias Vendidas = EI + Compras − EF (pelo preço de compra)
+      - vlr_compras_mes: total de NFs de entrada (compras) no mês
+
+      PEDIDOS DE COMPRA:
+      - qtd_pedidos_comprados: quantidade total em aberto nos pedidos
+      - qtd_pedidos_recebidos: quantidade já recebida
+      - ultimo_preco: último preço de compra pago pelo produto
+
+      REGRAS DE NEGÓCIO:
+      - Meta: positivo = falta vender, negativo = superou
+      - Margem saudável é definida pelo parâmetro par_percent_margem
+      - Produtos com > 90 dias sem venda são críticos (capital parado)
+      - fat_caixa status 'E' = efetivado, 'A' = aberto/pendente
+      - Movimentos estoque: tipo_movimento 'E' + stMov 'E' = entrada efetiva
+
+      == DADOS ATUAIS DO BI ==
       """ + contexto
 
       response = claude.messages.create(
@@ -171,10 +222,10 @@ tasks:
   - id: send_reply
     type: io.kestra.plugin.core.http.Request
     runIf: "{{ outputs.process_message.vars.status == 'replied' }}"
-    uri: "{{ secret('EVOLUTION_API_URL') }}/message/sendText/{{ secret('EVOLUTION_INSTANCE') }}"
+    uri: "https://elt-evolution-api.xbgiwf.easypanel.host/message/sendText/api_ia"
     method: POST
     headers:
-      apikey: "{{ secret('EVOLUTION_API_KEY') }}"
+      apikey: "429683C4C977415CAAFCCE10F7D57E11"
       Content-Type: application/json
     body: |
       {

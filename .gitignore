@@ -1,3 +1,16 @@
 **/.pbi/localSettings.json
 **/.pbi/cache.abf
+
+# Credenciais reais (usar .env.example para versionar)
 whatsapp-agent/.env
+
+# Ambiente virtual Python
+whatsapp-agent/.venv/
+
+# Cache Python
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+
+# Script temporário de exploração
+whatsapp-agent/explore_minio.py

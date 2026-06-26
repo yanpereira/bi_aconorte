@@ -6,10 +6,12 @@ import json
 import logging
 from typing import Optional
 
+import urllib3
 from minio import Minio
 from minio.error import S3Error
 
 log = logging.getLogger(__name__)
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 _minio: Optional[Minio] = None
 
@@ -23,6 +25,7 @@ def _client() -> Minio:
             access_key=config.MINIO_ACCESS_KEY,
             secret_key=config.MINIO_SECRET_KEY,
             secure=config.MINIO_SECURE,
+            http_client=urllib3.PoolManager(cert_reqs="CERT_NONE"),
         )
     return _minio
 

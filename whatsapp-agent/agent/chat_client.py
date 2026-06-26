@@ -1,10 +1,12 @@
 """
-Chat conversacional com Claude + tool use para consultar o Power BI.
+Chat conversacional com Claude + tool use para consultar o Power BI / MinIO.
 Mantém histórico por remetente (in-memory, limitado a _MAX_TURNS turnos).
 """
 import json
 import logging
+import os
 from datetime import datetime
+from pathlib import Path
 
 import anthropic
 from config import ANTHROPIC_API_KEY
@@ -19,17 +21,22 @@ _MAX_TURNS = 10  # pares user/assistant mantidos por remetente
 
 _histories: dict[str, list[dict]] = {}
 
+# Carrega o contexto semântico completo do modelo de BI
+_CONTEXT_FILE = Path(__file__).parent / "semantic_context.md"
+_SEMANTIC_CONTEXT = _CONTEXT_FILE.read_text(encoding="utf-8") if _CONTEXT_FILE.exists() else ""
+
 _SYSTEM = """Você é o assistente de BI da Aço Norte, uma distribuidora de aços do Ceará.
 Responda em português do Brasil, de forma direta e amigável para WhatsApp.
 
-Regras:
+Regras de formatação:
 - Não use markdown (sem **, ##, ---) — WhatsApp não renderiza
 - Use emojis com moderação para facilitar a leitura
 - Para valores monetários: R$ 1.234,56 | Para percentuais: 12,34%
 - Máximo de 60 caracteres por linha para não quebrar no celular
-- Quando precisar de dados atuais de vendas, estoque ou financeiro, use a ferramenta get_bi_data
-- Para perguntas gerais que não precisam de dados, responda diretamente
-"""
+- Quando precisar de dados atuais (números do dia/mês), use a ferramenta get_bi_data
+- Para perguntas conceituais sobre o modelo, métricas ou regras de negócio, responda usando o contexto abaixo
+
+""" + (_SEMANTIC_CONTEXT if _SEMANTIC_CONTEXT else "")
 
 _BI_TOOL = {
     "name": "get_bi_data",
