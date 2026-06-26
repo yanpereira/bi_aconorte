@@ -1,0 +1,50 @@
+id: teste_webhook
+namespace: aconorte
+
+triggers:
+  - id: evolution_webhook
+    type: io.kestra.plugin.core.trigger.Webhook
+    key: aconorte_webhook_2024
+
+tasks:
+  - id: responder
+    type: io.kestra.plugin.scripts.python.Script
+    containerImage: python:3.12-slim
+    beforeCommands:
+      - pip install --quiet requests kestra
+    env:
+      EVOLUTION_API_URL: "https://elt-evolution-api.xbgiwf.easypanel.host"
+      EVOLUTION_API_KEY: "{{ kv('EVOLUTION_API_KEY') }}"
+      EVOLUTION_INSTANCE: "api_ia"
+      RECIPIENTS: "5588999588269,5588992239602,5585992163703"
+    inputFiles:
+      payload.json: "{{ trigger.body }}"
+    script: |
+      import json, os, sys, requests
+      from kestra import Kestra
+
+      with open("payload.json") as f:
+          payload = json.load(f)
+
+      data   = payload.get("data", {})
+      key    = data.get("key", {})
+
+      if key.get("fromMe"):
+          Kestra.outputs({"status": "fromme"})
+          sys.exit(0)
+
+      remote_jid = key.get("remoteJid", "")
+      sender     = remote_jid.split("@")[0]
+      authorized = set(os.environ["RECIPIENTS"].split(","))
+
+      Kestra.outputs({"sender": sender, "remote_jid": remote_jid})
+
+      # sem filtro de autorização — responde qualquer número
+      r = requests.post(
+          f"{os.environ['EVOLUTION_API_URL']}/message/sendText/{os.environ['EVOLUTION_INSTANCE']}",
+          json={"number": sender, "text": "teste ok - agente funcionando!"},
+          headers={"apikey": os.environ["EVOLUTION_API_KEY"], "Content-Type": "application/json"},
+          timeout=30,
+      )
+      Kestra.outputs({"evo_status": r.status_code, "evo_body": r.text[:300]})
+      r.raise_for_status()

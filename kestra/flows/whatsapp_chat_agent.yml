@@ -1,25 +1,21 @@
 id: whatsapp_chat_agent
 namespace: aconorte
 
-# ── Documentação ──────────────────────────────────────────────────────────────
 # Flow passivo: só executa quando a Evolution API envia uma mensagem.
-# URL do webhook (configure na Evolution API):
-#   https://<seu-kestra>.easypanel.host/api/v1/executions/webhook/aconorte/whatsapp_chat_agent/aconorte_webhook_2024
-# ─────────────────────────────────────────────────────────────────────────────
+# URL do webhook:
+#   https://elt-kestra.xbgiwf.easypanel.host/api/v1/executions/webhook/aconorte/whatsapp_chat_agent/aconorte_webhook_2024
 
 triggers:
   - id: evolution_webhook
     type: io.kestra.plugin.core.trigger.Webhook
-    key: aconorte_webhook_2024   # mesmo valor do WEBHOOK_TOKEN no .env
+    key: aconorte_webhook_2024
 
 tasks:
-
-  # ── 1. Valida payload e lê KPIs do MinIO ──────────────────────────────────
   - id: process_message
     type: io.kestra.plugin.scripts.python.Script
     containerImage: python:3.12-slim
     beforeCommands:
-      - pip install --quiet anthropic minio requests
+      - pip install --quiet anthropic minio requests kestra pandas pyarrow
     env:
       ANTHROPIC_API_KEY: "{{ kv('ANTHROPIC_API_KEY') }}"
       MINIO_ENDPOINT: "elt-minio.xbgiwf.easypanel.host"
@@ -33,16 +29,16 @@ tasks:
     inputFiles:
       payload.json: "{{ trigger.body }}"
     script: |
-      import json, os, sys
+      import json, os, sys, io, requests as req
+      from datetime import datetime
       from kestra import Kestra
 
-      # ── Parse do payload da Evolution API ───────────────────────────────
       with open("payload.json") as f:
           payload = json.load(f)
 
       event = payload.get("event", "")
       if event != "messages.upsert":
-          Kestra.outputs({"status": "ignored", "remote_jid": "", "reply": ""})
+          Kestra.outputs({"status": "ignored_event", "event": event})
           sys.exit(0)
 
       data    = payload.get("data", {})
@@ -50,15 +46,27 @@ tasks:
       message = data.get("message", {})
 
       if key.get("fromMe"):
-          Kestra.outputs({"status": "ignored", "remote_jid": "", "reply": ""})
+          Kestra.outputs({"status": "ignored_fromme"})
           sys.exit(0)
 
       remote_jid = key.get("remoteJid", "")
       sender     = remote_jid.split("@")[0]
-      authorized = set(os.environ["RECIPIENTS"].split(","))
 
-      if sender not in authorized:
-          Kestra.outputs({"status": "ignored", "remote_jid": "", "reply": ""})
+      def br_variants(n):
+          d = "".join(filter(str.isdigit, n))
+          s = {d}
+          if len(d) == 13 and d.startswith("55"):
+              s.add(d[:4] + d[5:])
+          elif len(d) == 12 and d.startswith("55"):
+              s.add(d[:4] + "9" + d[4:])
+          return s
+
+      authorized_set = set()
+      for num in os.environ["RECIPIENTS"].split(","):
+          authorized_set |= br_variants(num.strip())
+
+      if sender not in authorized_set:
+          Kestra.outputs({"status": "ignored_unauthorized", "sender": sender})
           sys.exit(0)
 
       text = (
@@ -68,141 +76,166 @@ tasks:
       ).strip()
 
       if not text:
-          Kestra.outputs({"status": "ignored", "remote_jid": "", "reply": ""})
+          Kestra.outputs({"status": "ignored_notext", "sender": sender})
           sys.exit(0)
 
-      print(f"Mensagem de {sender}: {text[:80]}")
-
-      # ── KPIs do MinIO ───────────────────────────────────────────────────
+      # ── KPIs do MinIO (Parquet) ────────────────────────────────────────
+      import urllib3, pandas as pd
       from minio import Minio
-      from minio.error import S3Error
 
-      def fmt_currency(v):
-          if v is None: return "—"
-          return f"R$ {float(v):,.2f}".replace(",","X").replace(".","," ).replace("X",".")
+      urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-      def fmt_pct(v):
-          if v is None: return "—"
-          return f"{float(v)*100:.2f}%".replace(".",",")
-
-      minio_client = Minio(
+      minio = Minio(
           os.environ["MINIO_ENDPOINT"],
           access_key=os.environ["MINIO_ACCESS_KEY"],
           secret_key=os.environ["MINIO_SECRET_KEY"],
           secure=True,
+          http_client=urllib3.PoolManager(cert_reqs="CERT_NONE"),
       )
       bucket = os.environ["MINIO_BUCKET"]
 
-      kpis = {}
-      # Tenta sequência de nomes de arquivo
-      candidates = ["kpis.json", "vendas.json", "latest.json"]
-      for name in candidates:
-          try:
-              resp = minio_client.get_object(bucket, name)
-              kpis = json.loads(resp.read().decode("utf-8"))
-              resp.close()
-              print(f"KPIs lidos de {name}")
-              break
-          except S3Error:
-              continue
+      def read_parquet(name):
+          resp = minio.get_object(bucket, name)
+          df = pd.read_parquet(io.BytesIO(resp.read()))
+          resp.close()
+          return df
 
-      # Formata contexto para o Claude
-      vendas    = kpis.get("vendas", {})
-      estoque   = kpis.get("estoque", {})
-      financeiro= kpis.get("financeiro", {})
+      def fmt_r(v):
+          try: return f"R$ {float(v):,.2f}".replace(",","X").replace(".",",").replace("X",".")
+          except: return "—"
 
-      contexto = f"""=== VENDAS (mês atual) ===
-      Faturamento:       {fmt_currency(vendas.get('vlr_vendas'))}
-      Meta:              {fmt_currency(vendas.get('vlr_meta'))}
-      Restante meta:     {fmt_currency(vendas.get('vlr_restante_meta'))}
-      Margem bruta:      {fmt_pct(vendas.get('pct_margem_bruta'))}
-      Ticket médio:      {fmt_currency(vendas.get('vlr_ticket_medio'))}
-      Transações:        {vendas.get('qtd_transacoes')}
-      Clientes ativos:   {vendas.get('qtd_clientes')}
+      def fmt_pct(v):
+          try: return f"{float(v)*100:.1f}%".replace(".",",")
+          except: return "—"
 
-      === ESTOQUE ===
-      Saldo total:           {estoque.get('saldo_estoque_geral')}
-      Valor compra:          {fmt_currency(estoque.get('vlr_estoque_compra'))}
-      Valor venda:           {fmt_currency(estoque.get('vlr_estoque_venda'))}
-      Prod. estoque negativo:{estoque.get('qtd_prod_estoque_negativo')}
-      Prod. zerados:         {estoque.get('qtd_prod_estoque_zerado')}
-      Sem venda +90d:        {estoque.get('qtd_prod_sem_venda_mais_90d')}
+      def fmt_n(v):
+          try: return f"{int(v):,}".replace(",",".")
+          except: return "—"
 
-      === FINANCEIRO ===
-      Saldo caixa:    {fmt_currency(financeiro.get('vlr_saldo_caixa'))}
-      Entradas:       {fmt_currency(financeiro.get('vlr_credito'))}
-      Saídas:         {fmt_currency(financeiro.get('vlr_debito'))}
-      Contas a pagar: {fmt_currency(financeiro.get('contas_a_pagar'))}
-      Contas a receber:{fmt_currency(financeiro.get('contas_a_receber'))}
-      """ if kpis else "Dados do BI indisponíveis no momento."
+      now = datetime.now()
+      year, month = now.year, now.month
+      kpi_lines = []
 
-      # ── Gera resposta com Claude ─────────────────────────────────────────
+      # VENDAS
+      try:
+          vendas = read_parquet("fat_vendas.parquet")
+          vendas["dt_venda"] = pd.to_datetime(vendas["dt_venda"])
+          cur = vendas[(vendas["dt_venda"].dt.year == year) & (vendas["dt_venda"].dt.month == month)]
+
+          vlr_vendas   = cur["vlr_venda_total"].sum()
+          vlr_custo    = (cur["qtd_venda"] * cur["vlr_custo"]).sum()
+          vlr_margem   = vlr_vendas - vlr_custo
+          pct_margem   = vlr_margem / vlr_vendas if vlr_vendas > 0 else 0
+          qtd_trans    = cur["cd_venda"].nunique()
+          ticket_medio = vlr_vendas / qtd_trans if qtd_trans > 0 else 0
+          qtd_clientes = cur["cd_cliente"].nunique()
+          qtd_vend     = cur["cd_vendedor"].nunique()
+          vlr_desc     = cur["vlr_desconto"].sum()
+
+          prev_m = month - 1 if month > 1 else 12
+          prev_y = year if month > 1 else year - 1
+          prev   = vendas[(vendas["dt_venda"].dt.year == prev_y) & (vendas["dt_venda"].dt.month == prev_m)]
+          vlr_mes_ant = prev["vlr_venda_total"].sum()
+
+          kpi_lines += [
+              f"=== VENDAS ({month:02d}/{year}) ===",
+              f"Faturamento: {fmt_r(vlr_vendas)}",
+              f"Mes anterior: {fmt_r(vlr_mes_ant)}",
+              f"Custo mercadorias: {fmt_r(vlr_custo)}",
+              f"Margem bruta: {fmt_r(vlr_margem)} ({fmt_pct(pct_margem)})",
+              f"Ticket medio: {fmt_r(ticket_medio)}",
+              f"NFs/pedidos: {fmt_n(qtd_trans)}",
+              f"Clientes ativos: {fmt_n(qtd_clientes)}",
+              f"Vendedores ativos: {fmt_n(qtd_vend)}",
+              f"Descontos: {fmt_r(vlr_desc)}",
+          ]
+      except Exception as e:
+          kpi_lines.append(f"=== VENDAS: erro ({e}) ===")
+
+      # ESTOQUE
+      try:
+          estoques = read_parquet("fat_estoques.parquet")
+          produtos = read_parquet("dim_produtos.parquet")
+          merged   = estoques.merge(
+              produtos[["cd_produto", "preco_compra", "preco_venda"]],
+              left_on="idProduto", right_on="cd_produto", how="left"
+          )
+          saldo_total    = estoques["estoque"].sum()
+          pos            = merged[merged["estoque"] > 0]
+          vlr_est_compra = (pos["estoque"] * pos["preco_compra"]).sum()
+          vlr_est_venda  = (pos["estoque"] * pos["preco_venda"]).sum()
+          qtd_neg        = (estoques["estoque"] < 0).sum()
+          qtd_zer        = (estoques["estoque"] == 0).sum()
+
+          kpi_lines += [
+              "=== ESTOQUE (posicao atual) ===",
+              f"Saldo em unidades: {fmt_n(saldo_total)}",
+              f"Valor (preco compra): {fmt_r(vlr_est_compra)}",
+              f"Valor (preco venda): {fmt_r(vlr_est_venda)}",
+              f"Produtos estoque negativo: {qtd_neg}",
+              f"Produtos estoque zerado: {qtd_zer}",
+          ]
+      except Exception as e:
+          kpi_lines.append(f"=== ESTOQUE: erro ({e}) ===")
+
+      # FINANCEIRO
+      try:
+          caixa = read_parquet("caixa.parquet")
+          caixa["dtLancamento"] = pd.to_datetime(caixa["dtLancamento"])
+
+          caixa_mes = caixa[
+              (caixa["dtLancamento"].dt.year == year) &
+              (caixa["dtLancamento"].dt.month == month) &
+              (caixa["status"] == "P")
+          ]
+          vlr_cred = caixa_mes[caixa_mes["tipo"] == "C"]["valor"].sum()
+          vlr_deb  = caixa_mes[caixa_mes["tipo"] == "D"]["valor"].sum()
+          vlr_saldo = vlr_cred - vlr_deb
+
+          aberto    = caixa[caixa["status"] == "A"]
+          c_receber = aberto[aberto["tipo"] == "C"]["valor"].sum()
+          c_pagar   = aberto[aberto["tipo"] == "D"]["valor"].sum()
+
+          kpi_lines += [
+              f"=== FINANCEIRO ({month:02d}/{year}) ===",
+              f"Entradas efetivadas: {fmt_r(vlr_cred)}",
+              f"Saidas efetivadas: {fmt_r(vlr_deb)}",
+              f"Saldo do mes: {fmt_r(vlr_saldo)}",
+              f"Contas a receber (aberto): {fmt_r(c_receber)}",
+              f"Contas a pagar (aberto): {fmt_r(c_pagar)}",
+          ]
+      except Exception as e:
+          kpi_lines.append(f"=== FINANCEIRO: erro ({e}) ===")
+
+      contexto_dados = "\n".join(kpi_lines)
+
+      # ── Claude ─────────────────────────────────────────────────────────
       import anthropic
 
-      claude = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
+      SEMANTICA = (
+          "Modelo Aco Norte — distribuidora de acos, Ceara.\n"
+          "Tabelas: fat_vendas (itens vendidos; vlr_custo = custo unitario; vlr_venda_total = faturamento por linha),"
+          " fat_estoques (posicao atual por produto),"
+          " dim_produtos (cadastro com preco_compra e preco_venda),"
+          " caixa (lancamentos financeiros: tipo C=credito D=debito; status A=aberto P=pago C=cancelado).\n"
+          "Regras: margem bruta = faturamento - (qtd x custo_unitario);"
+          " contas_a_pagar = debitos status A; contas_a_receber = creditos status A;"
+          " saldo_caixa = creditos - debitos efetivados (status P) no mes;"
+          " estoque_negativo = inconsistencia ou venda a descoberto;"
+          " cobertura estoque < 2 meses sem pedido aberto = urgente comprar."
+      )
 
-      system = """Você é o assistente de BI da Aço Norte, distribuidora de aços do Ceará.
-      Responda em português do Brasil, de forma direta e amigável para WhatsApp.
+      system = (
+          "Voce e o assistente de BI da Aco Norte, distribuidora de acos do Ceara.\n"
+          "Responda em portugues do Brasil, direto e amigavel para WhatsApp.\n"
+          "Sem markdown (sem **, ##). Emojis com moderacao. Max 60 chars/linha.\n\n"
+          "== CONTEXTO DO MODELO ==\n"
+          + SEMANTICA
+          + "\n\n== DADOS ATUAIS ==\n"
+          + contexto_dados
+      )
 
-      Regras de formatação:
-      - Não use markdown (sem **, ##, ---) — WhatsApp não renderiza
-      - Use emojis com moderação
-      - Valores monetários: R$ 1.234,56 | Percentuais: 12,34%
-      - Máximo 60 caracteres por linha
-
-      == MODELO DE NEGÓCIO DA ACO NORTE ==
-
-      A Aço Norte é uma distribuidora de aços do Ceará. O BI possui 4 pilares:
-      Vendas, Estoque/Movimentações, Financeiro e Pedidos de Compra.
-
-      MÉTRICAS DE VENDAS:
-      - vlr_vendas: faturamento bruto (soma de vlr_venda_total)
-      - vlr_margem_bruta: faturamento menos custo (lucro bruto em R$)
-      - %_margem_bruta: margem dividida pelo faturamento
-      - vlr_ticket_medio: faturamento ÷ número de notas/pedidos
-      - vlr_meta: meta mensal de faturamento (tabela Metas)
-      - vlr_restante_meta: quanto falta para a meta (negativo = superou)
-      - qtd_transacoes: número de notas/pedidos distintos
-      - qtd_clientes: clientes distintos que compraram
-      - Faturamento Mês Anterior / Ano Anterior: comparativos temporais
-
-      MÉTRICAS DE ESTOQUE:
-      - saldo_estoque_geral: posição atual em quantidade
-      - vlr_estoque (compra): estoque valorado pelo preço de compra
-      - vlr_estoque_vendas: estoque valorado pelo preço de venda
-      - qtd_produtos_estoque_negativo: inconsistência / venda a descoberto
-      - qtd_produtos_estoque_zerado: ruptura de estoque
-      - Sem venda 30-60d / 60-90d / +90d: faixas de produtos parados
-      - situacao_abastecer_estoque: "Comprar urgentemente" (< 2 meses sem pedido),
-        "Comprar quando possível" (≥ 2 meses sem pedido),
-        "Aguardando recebimento" (pedido aberto),
-        "Verificar real situação" (estoque negativo)
-      - qtd_meses_capacidade_estoque: meses de cobertura = (estoque + pedidos) ÷ venda média mensal
-
-      MÉTRICAS FINANCEIRAS:
-      - vlr_credito: entradas de caixa (tipo C, efetivadas)
-      - vlr_debito: saídas de caixa (tipo D, efetivadas)
-      - vlr_saldo_caixa: créditos − débitos
-      - contas_a_pagar: débitos em aberto (status A)
-      - contas_a_receber: créditos em aberto (status A)
-      - cmv_compra: Custo das Mercadorias Vendidas = EI + Compras − EF (pelo preço de compra)
-      - vlr_compras_mes: total de NFs de entrada (compras) no mês
-
-      PEDIDOS DE COMPRA:
-      - qtd_pedidos_comprados: quantidade total em aberto nos pedidos
-      - qtd_pedidos_recebidos: quantidade já recebida
-      - ultimo_preco: último preço de compra pago pelo produto
-
-      REGRAS DE NEGÓCIO:
-      - Meta: positivo = falta vender, negativo = superou
-      - Margem saudável é definida pelo parâmetro par_percent_margem
-      - Produtos com > 90 dias sem venda são críticos (capital parado)
-      - fat_caixa status 'E' = efetivado, 'A' = aberto/pendente
-      - Movimentos estoque: tipo_movimento 'E' + stMov 'E' = entrada efetiva
-
-      == DADOS ATUAIS DO BI ==
-      """ + contexto
-
+      claude   = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
       response = claude.messages.create(
           model="claude-sonnet-4-6",
           max_tokens=512,
@@ -210,26 +243,21 @@ tasks:
           messages=[{"role": "user", "content": text}],
       )
       reply = response.content[0].text
-      print(f"Resposta gerada ({len(reply)} chars)")
+
+      # ── Evolution API ──────────────────────────────────────────────────
+      r = req.post(
+          f"{os.environ['EVOLUTION_API_URL']}/message/sendText/{os.environ['EVOLUTION_INSTANCE']}",
+          json={"number": sender, "text": reply, "delay": 1200},
+          headers={"apikey": os.environ["EVOLUTION_API_KEY"], "Content-Type": "application/json"},
+          timeout=30,
+      )
 
       Kestra.outputs({
           "status": "replied",
-          "remote_jid": remote_jid,
-          "reply": reply,
+          "sender": sender,
+          "evo_http": r.status_code,
+          "evo_response": r.text[:200],
+          "reply_preview": reply[:200],
       })
 
-  # ── 2. Envia resposta via Evolution API (só se houve resposta) ─────────────
-  - id: send_reply
-    type: io.kestra.plugin.core.http.Request
-    runIf: "{{ outputs.process_message.vars.status == 'replied' }}"
-    uri: "https://elt-evolution-api.xbgiwf.easypanel.host/message/sendText/api_ia"
-    method: POST
-    headers:
-      apikey: "{{ kv('EVOLUTION_API_KEY') }}"
-      Content-Type: application/json
-    body: |
-      {
-        "number": "{{ outputs.process_message.vars.remote_jid }}",
-        "text": {{ outputs.process_message.vars.reply | json }},
-        "delay": 1200
-      }
+      r.raise_for_status()
