@@ -15,13 +15,13 @@ POWERBI_DATASET_ID   = os.getenv("POWERBI_DATASET_ID", "")
 # Anthropic
 ANTHROPIC_API_KEY = os.environ["ANTHROPIC_API_KEY"]
 
-# Evolution API
-EVOLUTION_API_URL  = os.environ["EVOLUTION_API_URL"].rstrip("/")
-EVOLUTION_API_KEY  = os.environ["EVOLUTION_API_KEY"]
-EVOLUTION_INSTANCE = os.environ["EVOLUTION_INSTANCE"]
+# Evolution API (opcional — usado apenas pelo webhook do WhatsApp)
+EVOLUTION_API_URL  = os.getenv("EVOLUTION_API_URL", "").rstrip("/")
+EVOLUTION_API_KEY  = os.getenv("EVOLUTION_API_KEY", "")
+EVOLUTION_INSTANCE = os.getenv("EVOLUTION_INSTANCE", "")
 
-# Destinatários
-WHATSAPP_RECIPIENTS = [r.strip() for r in os.environ["WHATSAPP_RECIPIENTS"].split(",")]
+# Destinatários (opcional)
+WHATSAPP_RECIPIENTS = [r.strip() for r in os.getenv("WHATSAPP_RECIPIENTS", "").split(",") if r.strip()]
 
 # Scheduler
 REPORT_TIMES = [t.strip() for t in os.getenv("REPORT_TIMES", "08:00").split(",")]
