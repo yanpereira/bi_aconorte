@@ -17,13 +17,13 @@ log = logging.getLogger(__name__)
 
 _client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
 
-_MAX_TURNS = 10  # pares user/assistant mantidos por remetente
+_MAX_TURNS = 5  # pares user/assistant mantidos por remetente
 
 _histories: dict[str, list[dict]] = {}
 
 # Acumulador de tokens por remetente e total geral
 _usage: dict[str, dict] = {}  # sender → {"input": int, "output": int, "calls": int}
-_usage_total: dict[str, int] = {"input": 0, "output": 0, "calls": 0}
+_usage_total: dict[str, int] = {"input": 0, "cached": 0, "output": 0, "calls": 0}
 
 
 def get_usage_stats() -> dict:
@@ -90,22 +90,25 @@ def chat_response(sender: str, message: str) -> str:
         response = _client.messages.create(
             model="claude-sonnet-4-6",
             max_tokens=1024,
-            system=_SYSTEM,
+            system=[{"type": "text", "text": _SYSTEM, "cache_control": {"type": "ephemeral"}}],
             tools=[_BI_TOOL],
             messages=history,
         )
 
         # Acumula tokens
         u = response.usage
-        sender_stats = _usage.setdefault(sender, {"input": 0, "output": 0, "calls": 0})
+        cached = getattr(u, "cache_read_input_tokens", 0) or 0
+        sender_stats = _usage.setdefault(sender, {"input": 0, "cached": 0, "output": 0, "calls": 0})
         sender_stats["input"]  += u.input_tokens
+        sender_stats["cached"] += cached
         sender_stats["output"] += u.output_tokens
         sender_stats["calls"]  += 1
         _usage_total["input"]  += u.input_tokens
+        _usage_total["cached"] += cached
         _usage_total["output"] += u.output_tokens
         _usage_total["calls"]  += 1
-        log.info("Tokens [%s] in=%d out=%d | total in=%d out=%d",
-                 sender, u.input_tokens, u.output_tokens,
+        log.info("Tokens [%s] in=%d cached=%d out=%d | total in=%d out=%d",
+                 sender, u.input_tokens, cached, u.output_tokens,
                  _usage_total["input"], _usage_total["output"])
 
         if response.stop_reason == "tool_use":

@@ -107,9 +107,11 @@ async def webhook(request: Request):
 async def usage():
     """Retorna o consumo de tokens acumulado desde o último restart."""
     stats = get_usage_stats()
-    # Estimativa de custo claude-sonnet-4-6: $3/M input, $15/M output
+    # Preços claude-sonnet-4-6: $3/M input, $0.30/M cached read, $15/M output
     total = stats["total"]
-    custo_usd = (total["input"] / 1_000_000 * 3) + (total["output"] / 1_000_000 * 15)
+    cached = total.get("cached", 0)
+    normal_input = total["input"] - cached
+    custo_usd = (normal_input / 1_000_000 * 3) + (cached / 1_000_000 * 0.30) + (total["output"] / 1_000_000 * 15)
     return {**stats, "custo_estimado_usd": round(custo_usd, 4)}
 
 
