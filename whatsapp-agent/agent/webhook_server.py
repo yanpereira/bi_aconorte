@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 import config
-from agent.chat_client import chat_response
+from agent.chat_client import chat_response, get_usage_stats
 from agent.whatsapp_client import send_message
 
 log = logging.getLogger(__name__)
@@ -101,6 +101,16 @@ async def webhook(request: Request):
         log.error("Erro ao processar mensagem de %s: %s", sender, exc)
 
     return {"status": "ok"}
+
+
+@app.get("/usage")
+async def usage():
+    """Retorna o consumo de tokens acumulado desde o último restart."""
+    stats = get_usage_stats()
+    # Estimativa de custo claude-sonnet-4-6: $3/M input, $15/M output
+    total = stats["total"]
+    custo_usd = (total["input"] / 1_000_000 * 3) + (total["output"] / 1_000_000 * 15)
+    return {**stats, "custo_estimado_usd": round(custo_usd, 4)}
 
 
 @app.get("/health")

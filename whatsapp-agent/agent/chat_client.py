@@ -21,6 +21,14 @@ _MAX_TURNS = 10  # pares user/assistant mantidos por remetente
 
 _histories: dict[str, list[dict]] = {}
 
+# Acumulador de tokens por remetente e total geral
+_usage: dict[str, dict] = {}  # sender → {"input": int, "output": int, "calls": int}
+_usage_total: dict[str, int] = {"input": 0, "output": 0, "calls": 0}
+
+
+def get_usage_stats() -> dict:
+    return {"total": dict(_usage_total), "por_usuario": dict(_usage)}
+
 # Carrega o contexto semântico completo do modelo de BI
 _CONTEXT_FILE = Path(__file__).parent / "semantic_context.md"
 _SEMANTIC_CONTEXT = _CONTEXT_FILE.read_text(encoding="utf-8") if _CONTEXT_FILE.exists() else ""
@@ -86,6 +94,19 @@ def chat_response(sender: str, message: str) -> str:
             tools=[_BI_TOOL],
             messages=history,
         )
+
+        # Acumula tokens
+        u = response.usage
+        sender_stats = _usage.setdefault(sender, {"input": 0, "output": 0, "calls": 0})
+        sender_stats["input"]  += u.input_tokens
+        sender_stats["output"] += u.output_tokens
+        sender_stats["calls"]  += 1
+        _usage_total["input"]  += u.input_tokens
+        _usage_total["output"] += u.output_tokens
+        _usage_total["calls"]  += 1
+        log.info("Tokens [%s] in=%d out=%d | total in=%d out=%d",
+                 sender, u.input_tokens, u.output_tokens,
+                 _usage_total["input"], _usage_total["output"])
 
         if response.stop_reason == "tool_use":
             tool_block = next(b for b in response.content if b.type == "tool_use")
