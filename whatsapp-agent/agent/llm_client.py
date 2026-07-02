@@ -104,9 +104,11 @@ def _humanize_financeiro(d: dict) -> str:
 def generate_report(kpis: dict) -> str:
     """Recebe os KPIs agrupados e retorna o texto do relatório para WhatsApp."""
     now = datetime.now().strftime("%d/%m/%Y %H:%M")
+    vendas = kpis.get("vendas", {})
+    vendas_mes = vendas.get("mes", vendas)  # compatível com estrutura antiga
     user_message = _USER_TEMPLATE.format(
         timestamp=now,
-        vendas_json=_humanize_vendas(kpis.get("vendas", {})),
+        vendas_json=_humanize_vendas(vendas_mes),
         estoque_json=_humanize_estoque(kpis.get("estoque", {})),
         financeiro_json=_humanize_financeiro(kpis.get("financeiro", {})),
     )

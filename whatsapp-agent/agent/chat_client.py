@@ -57,9 +57,11 @@ def _fetch_bi_tool_result() -> str:
     try:
         kpis = get_kpis()
         now = datetime.now().strftime("%d/%m/%Y %H:%M")
+        vendas = kpis.get("vendas", {})
         return json.dumps({
             "data_hora": now,
-            "vendas_mes": json.loads(_humanize_vendas(kpis.get("vendas", {}))),
+            "vendas_hoje": json.loads(_humanize_vendas(vendas.get("hoje", {}))),
+            "vendas_mes_acumulado": json.loads(_humanize_vendas(vendas.get("mes", {}))),
             "estoque": json.loads(_humanize_estoque(kpis.get("estoque", {}))),
             "financeiro": json.loads(_humanize_financeiro(kpis.get("financeiro", {}))),
         }, ensure_ascii=False, indent=2)

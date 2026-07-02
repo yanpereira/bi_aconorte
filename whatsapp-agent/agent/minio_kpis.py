@@ -45,27 +45,34 @@ def get_kpis() -> dict:
     try:
         vendas = _read("fat_vendas.parquet")
         vendas["dt_venda"] = pd.to_datetime(vendas["dt_venda"])
-        cur = vendas[(vendas["dt_venda"].dt.year == year) & (vendas["dt_venda"].dt.month == month)]
 
-        vlr_vendas = float(cur["vlr_venda_total"].sum())
-        vlr_custo  = float((cur["qtd_venda"] * cur["vlr_custo"]).sum())
-        vlr_margem = vlr_vendas - vlr_custo
-        qtd_trans  = int(cur["cd_venda"].nunique())
+        hoje = now.date()
+        cur_dia = vendas[vendas["dt_venda"].dt.date == hoje]
+        cur_mes = vendas[(vendas["dt_venda"].dt.year == year) & (vendas["dt_venda"].dt.month == month)]
+
+        def _resumo(df: pd.DataFrame) -> dict:
+            vlr = float(df["vlr_venda_total"].sum())
+            custo = float((df["qtd_venda"] * df["vlr_custo"]).sum())
+            margem = vlr - custo
+            qtd = int(df["cd_venda"].nunique())
+            return {
+                "vlr_vendas":       round(vlr, 2),
+                "vlr_custo":        round(custo, 2),
+                "vlr_margem_bruta": round(margem, 2),
+                "pct_margem_bruta": round(margem / vlr, 4) if vlr else 0,
+                "qtd_transacoes":   qtd,
+                "vlr_ticket_medio": round(vlr / qtd, 2) if qtd else 0,
+                "qtd_clientes":     int(df["cd_cliente"].nunique()),
+                "qtd_vendedores":   int(df["cd_vendedor"].nunique()),
+            }
 
         prev_m = month - 1 if month > 1 else 12
         prev_y = year if month > 1 else year - 1
         prev   = vendas[(vendas["dt_venda"].dt.year == prev_y) & (vendas["dt_venda"].dt.month == prev_m)]
 
         result["vendas"] = {
-            "vlr_vendas":          round(vlr_vendas, 2),
-            "vlr_custo":           round(vlr_custo, 2),
-            "vlr_margem_bruta":    round(vlr_margem, 2),
-            "pct_margem_bruta":    round(vlr_margem / vlr_vendas, 4) if vlr_vendas else 0,
-            "qtd_transacoes":      qtd_trans,
-            "vlr_ticket_medio":    round(vlr_vendas / qtd_trans, 2) if qtd_trans else 0,
-            "qtd_clientes":        int(cur["cd_cliente"].nunique()),
-            "qtd_vendedores":      int(cur["cd_vendedor"].nunique()),
-            "vlr_fat_mes_anterior": round(float(prev["vlr_venda_total"].sum()), 2),
+            "hoje": _resumo(cur_dia),
+            "mes":  {**_resumo(cur_mes), "vlr_fat_mes_anterior": round(float(prev["vlr_venda_total"].sum()), 2)},
         }
     except Exception as e:
         result["vendas"] = {"erro": str(e)}
