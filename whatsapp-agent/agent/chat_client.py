@@ -10,7 +10,7 @@ from pathlib import Path
 
 import anthropic
 from config import ANTHROPIC_API_KEY
-from agent.powerbi_client import get_all_kpis
+from agent.minio_kpis import get_kpis
 from agent.llm_client import _humanize_vendas, _humanize_estoque, _humanize_financeiro
 
 log = logging.getLogger(__name__)
@@ -55,7 +55,7 @@ _BI_TOOL = {
 
 def _fetch_bi_tool_result() -> str:
     try:
-        kpis = get_all_kpis()
+        kpis = get_kpis()
         now = datetime.now().strftime("%d/%m/%Y %H:%M")
         return json.dumps({
             "data_hora": now,

@@ -3,14 +3,14 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# Azure AD
-AZURE_TENANT_ID     = os.environ["AZURE_TENANT_ID"]
-AZURE_CLIENT_ID     = os.environ["AZURE_CLIENT_ID"]
-AZURE_CLIENT_SECRET = os.environ["AZURE_CLIENT_SECRET"]
+# Azure AD (opcional — usado apenas se Power BI estiver ativo)
+AZURE_TENANT_ID     = os.getenv("AZURE_TENANT_ID", "")
+AZURE_CLIENT_ID     = os.getenv("AZURE_CLIENT_ID", "")
+AZURE_CLIENT_SECRET = os.getenv("AZURE_CLIENT_SECRET", "")
 
-# Power BI
-POWERBI_WORKSPACE_ID = os.environ["POWERBI_WORKSPACE_ID"]
-POWERBI_DATASET_ID   = os.environ["POWERBI_DATASET_ID"]
+# Power BI (opcional)
+POWERBI_WORKSPACE_ID = os.getenv("POWERBI_WORKSPACE_ID", "")
+POWERBI_DATASET_ID   = os.getenv("POWERBI_DATASET_ID", "")
 
 # Anthropic
 ANTHROPIC_API_KEY = os.environ["ANTHROPIC_API_KEY"]

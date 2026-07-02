@@ -1,9 +1,12 @@
 """
 Servidor webhook FastAPI — recebe mensagens da Evolution API e responde via Claude.
+Também expõe POST /chat para o web app compras-aconorte.
 """
 import logging
 
 from fastapi import FastAPI, Request, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 
 import config
 from agent.chat_client import chat_response
@@ -12,6 +15,29 @@ from agent.whatsapp_client import send_message
 log = logging.getLogger(__name__)
 
 app = FastAPI(title="BI Aço Norte — WhatsApp Agent", docs_url=None, redoc_url=None)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["POST", "GET"],
+    allow_headers=["*"],
+)
+
+
+class ChatRequest(BaseModel):
+    message: str
+    sender: str = "web_user"
+
+
+@app.post("/chat")
+async def chat(req: ChatRequest):
+    """Endpoint para o web app — recebe pergunta, devolve resposta da IA."""
+    try:
+        reply = chat_response(req.sender, req.message)
+        return {"reply": reply}
+    except Exception as exc:
+        log.error("Erro no /chat: %s", exc)
+        raise HTTPException(status_code=500, detail=str(exc))
 
 
 def _extract_text(message: dict) -> str:

@@ -27,7 +27,7 @@ tasks:
       EVOLUTION_INSTANCE: "api_ia"
       RECIPIENTS: "5588999588269,5588992239602,5585992163703"
     inputFiles:
-      payload.json: "{{ trigger.body }}"
+      payload.json: "{{ trigger.body | default('{}') }}"
     script: |
       import json, os, sys, io, requests as req
       from datetime import datetime
@@ -245,18 +245,23 @@ tasks:
       reply = response.content[0].text
 
       # ── Evolution API ──────────────────────────────────────────────────
+      print(f"[EVO] sender={sender} remote_jid={remote_jid}")
+      print(f"[REPLY] {reply[:200]}")
+
       r = req.post(
           f"{os.environ['EVOLUTION_API_URL']}/message/sendText/{os.environ['EVOLUTION_INSTANCE']}",
-          json={"number": sender, "text": reply, "delay": 1200},
+          json={"number": sender, "text": reply},
           headers={"apikey": os.environ["EVOLUTION_API_KEY"], "Content-Type": "application/json"},
           timeout=30,
       )
+
+      print(f"[EVO] status={r.status_code} body={r.text[:500]}")
 
       Kestra.outputs({
           "status": "replied",
           "sender": sender,
           "evo_http": r.status_code,
-          "evo_response": r.text[:200],
+          "evo_response": r.text[:300],
           "reply_preview": reply[:200],
       })
 
