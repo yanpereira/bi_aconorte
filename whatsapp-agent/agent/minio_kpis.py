@@ -52,8 +52,9 @@ def _filtrar_periodo(df: pd.DataFrame, coluna: str, periodo: str) -> pd.DataFram
 def _carregar_vendas_com_nomes() -> pd.DataFrame:
     """Retorna fat_vendas com nomes de produto, cliente e vendedor."""
     vendas = _read("fat_vendas.parquet")
-    produtos = _read("dim_produtos.parquet")[["cd_produto", "ds_produto", "ds_grupo", "preco_compra", "preco_venda"]]
-    pessoas = _read("dim_pessoas.parquet")[["cd_pessoa", "ds_pessoa"]]
+    # drop_duplicates evita multiplicação de linhas no join quando a dimensão tem registros duplicados
+    produtos = _read("dim_produtos.parquet")[["cd_produto", "ds_produto", "ds_grupo", "preco_compra", "preco_venda"]].drop_duplicates("cd_produto")
+    pessoas = _read("dim_pessoas.parquet")[["cd_pessoa", "ds_pessoa"]].drop_duplicates("cd_pessoa")
 
     clientes = pessoas.rename(columns={"cd_pessoa": "cd_cliente", "ds_pessoa": "nm_cliente"})
     vendedores = pessoas.rename(columns={"cd_pessoa": "cd_vendedor", "ds_pessoa": "nm_vendedor"})
