@@ -1,35 +1,33 @@
 """
-Chat conversacional com Claude + tool use para consultar o Power BI / MinIO.
+Chat conversacional com Claude + tool use para consultar dados do MinIO.
 Mantém histórico por remetente (in-memory, limitado a _MAX_TURNS turnos).
 """
 import json
 import logging
-import os
 from datetime import datetime
 from pathlib import Path
 
 import anthropic
 from config import ANTHROPIC_API_KEY
-from agent.minio_kpis import get_kpis
+from agent.minio_kpis import get_kpis, get_ranking_vendedores, get_ranking_clientes, get_ranking_produtos
 from agent.llm_client import _humanize_vendas, _humanize_estoque, _humanize_financeiro
 
 log = logging.getLogger(__name__)
 
 _client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
 
-_MAX_TURNS = 5  # pares user/assistant mantidos por remetente
+_MAX_TURNS = 5
 
 _histories: dict[str, list[dict]] = {}
 
-# Acumulador de tokens por remetente e total geral
-_usage: dict[str, dict] = {}  # sender → {"input": int, "output": int, "calls": int}
+_usage: dict[str, dict] = {}
 _usage_total: dict[str, int] = {"input": 0, "cached": 0, "output": 0, "calls": 0}
 
 
 def get_usage_stats() -> dict:
     return {"total": dict(_usage_total), "por_usuario": dict(_usage)}
 
-# Carrega o contexto semântico completo do modelo de BI
+
 _CONTEXT_FILE = Path(__file__).parent / "semantic_context.md"
 _SEMANTIC_CONTEXT = _CONTEXT_FILE.read_text(encoding="utf-8") if _CONTEXT_FILE.exists() else ""
 
@@ -37,63 +35,96 @@ _SYSTEM = """Você é o assistente de BI da Aço Norte, uma distribuidora de aç
 Responda em português do Brasil, de forma direta e amigável.
 
 Regras de formatação:
-- Não use markdown (sem **, ##, ---) — WhatsApp não renderiza
-- Use emojis com moderação para facilitar a leitura
+- Use markdown para estruturar respostas: **negrito**, tabelas (|col|col|), listas
+- Tabelas são ideais para rankings e comparativos — use sempre que listar mais de 3 itens
 - Para valores monetários: R$ 1.234,56 | Para percentuais: 12,34%
-- Máximo de 60 caracteres por linha para não quebrar no celular
-- Quando precisar de dados atuais (números do dia/mês), use a ferramenta get_bi_data
-- Para perguntas conceituais sobre o modelo, métricas ou regras de negócio, responda usando o contexto abaixo
+- Seja conciso: destaque os números mais importantes primeiro
+- Quando precisar de dados, use a ferramenta consultar_dados com os parâmetros corretos
 
 Regras de comportamento:
-- NUNCA liste o que você não consegue fazer ou suas limitações
-- NUNCA use expressões como "não tenho acesso a", "não consigo", "fora do meu escopo", "limitação"
-- Se não tiver o dado solicitado, diga que vai verificar e oriente o usuário a consultar o dashboard do Power BI para esse nível de detalhe
-- Foque sempre no que você PODE fazer e nos dados que TEM disponíveis
-- Quando perguntarem o que você faz, descreva apenas as capacidades positivas
+- NUNCA liste suas limitações ou o que não consegue fazer
+- Foque sempre no que você PODE responder
+- Se precisar de dados, chame a ferramenta antes de responder
+- Para rankings, sempre mostre em formato de tabela ordenada
 
 """ + (_SEMANTIC_CONTEXT if _SEMANTIC_CONTEXT else "")
 
 _BI_TOOL = {
-    "name": "get_bi_data",
+    "name": "consultar_dados",
     "description": (
-        "Busca os KPIs atuais do Power BI da Aço Norte: vendas do mês, "
-        "estoque e situação financeira. Use quando o usuário perguntar sobre "
-        "números, metas, faturamento, estoque ou qualquer dado do negócio."
+        "Consulta dados do BI da Aço Norte. Use para responder qualquer pergunta "
+        "sobre vendas, rankings, estoque, financeiro ou comparativos de períodos."
     ),
     "input_schema": {
         "type": "object",
-        "properties": {},
-        "required": [],
-    },
+        "properties": {
+            "tipo": {
+                "type": "string",
+                "enum": ["kpis_gerais", "ranking_vendedores", "ranking_clientes", "ranking_produtos", "estoque", "financeiro"],
+                "description": "Tipo de consulta: kpis_gerais para totais, ranking_* para classificações, estoque/financeiro para dados específicos"
+            },
+            "periodo": {
+                "type": "string",
+                "enum": ["hoje", "mes_atual", "mes_anterior"],
+                "description": "Período da consulta. Padrão: mes_atual"
+            },
+            "top_n": {
+                "type": "integer",
+                "description": "Quantidade de itens no ranking (padrão: 5)"
+            }
+        },
+        "required": ["tipo"]
+    }
 }
 
 
-def _fetch_bi_tool_result() -> str:
+def _executar_consulta(tipo: str, periodo: str = "mes_atual", top_n: int = 5) -> str:
     try:
-        kpis = get_kpis()
         now = datetime.now().strftime("%d/%m/%Y %H:%M")
+
+        if tipo == "ranking_vendedores":
+            dados = get_ranking_vendedores(periodo, top_n)
+            return json.dumps({"data_hora": now, "periodo": periodo, "ranking_vendedores": dados}, ensure_ascii=False, indent=2)
+
+        if tipo == "ranking_clientes":
+            dados = get_ranking_clientes(periodo, top_n)
+            return json.dumps({"data_hora": now, "periodo": periodo, "ranking_clientes": dados}, ensure_ascii=False, indent=2)
+
+        if tipo == "ranking_produtos":
+            dados = get_ranking_produtos(periodo, top_n)
+            return json.dumps({"data_hora": now, "periodo": periodo, "ranking_produtos": dados}, ensure_ascii=False, indent=2)
+
+        kpis = get_kpis(periodo)
         vendas = kpis.get("vendas", {})
+
+        if tipo == "estoque":
+            return json.dumps({"data_hora": now, "estoque": _humanize_estoque(kpis.get("estoque", {}))}, ensure_ascii=False, indent=2)
+
+        if tipo == "financeiro":
+            return json.dumps({"data_hora": now, "periodo": periodo, "financeiro": _humanize_financeiro(kpis.get("financeiro", {}))}, ensure_ascii=False, indent=2)
+
+        # kpis_gerais
         return json.dumps({
             "data_hora": now,
+            "periodo": periodo,
             "vendas_hoje": json.loads(_humanize_vendas(vendas.get("hoje", {}))),
-            "vendas_mes_acumulado": json.loads(_humanize_vendas(vendas.get("mes", {}))),
+            "vendas_periodo": json.loads(_humanize_vendas(vendas.get("mes", {}))),
             "estoque": json.loads(_humanize_estoque(kpis.get("estoque", {}))),
             "financeiro": json.loads(_humanize_financeiro(kpis.get("financeiro", {}))),
         }, ensure_ascii=False, indent=2)
+
     except Exception as exc:
         return json.dumps({"erro": f"Não foi possível buscar os dados: {exc}"})
 
 
 def chat_response(sender: str, message: str) -> str:
-    """Processa uma mensagem e retorna a resposta do assistente."""
     history = _histories.setdefault(sender, [])
     history.append({"role": "user", "content": message})
 
-    # Limita histórico para evitar crescimento ilimitado
     if len(history) > _MAX_TURNS * 2:
         history[:] = history[-(_MAX_TURNS * 2):]
 
-    for _ in range(5):  # máximo de 5 rounds de tool use
+    for _ in range(5):
         response = _client.messages.create(
             model="claude-sonnet-4-6",
             max_tokens=1024,
@@ -102,7 +133,6 @@ def chat_response(sender: str, message: str) -> str:
             messages=history,
         )
 
-        # Acumula tokens
         u = response.usage
         cached = getattr(u, "cache_read_input_tokens", 0) or 0
         sender_stats = _usage.setdefault(sender, {"input": 0, "cached": 0, "output": 0, "calls": 0})
@@ -120,18 +150,19 @@ def chat_response(sender: str, message: str) -> str:
 
         if response.stop_reason == "tool_use":
             tool_block = next(b for b in response.content if b.type == "tool_use")
-            log.info("Tool use: %s (sender=%s)", tool_block.name, sender)
+            args = tool_block.input if isinstance(tool_block.input, dict) else {}
+            log.info("Tool use: %s args=%s (sender=%s)", tool_block.name, args, sender)
 
-            tool_result = _fetch_bi_tool_result()
+            result = _executar_consulta(
+                tipo=args.get("tipo", "kpis_gerais"),
+                periodo=args.get("periodo", "mes_atual"),
+                top_n=args.get("top_n", 5),
+            )
 
             history.append({"role": "assistant", "content": response.content})
             history.append({
                 "role": "user",
-                "content": [{
-                    "type": "tool_result",
-                    "tool_use_id": tool_block.id,
-                    "content": tool_result,
-                }],
+                "content": [{"type": "tool_result", "tool_use_id": tool_block.id, "content": result}],
             })
         else:
             text = next((b.text for b in response.content if b.type == "text"), "")
