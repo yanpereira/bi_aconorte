@@ -300,6 +300,33 @@ def get_vendas_canceladas(periodo: str = "mes_atual") -> dict:
     }
 
 
+# ─── DIAGNÓSTICO ────────────────────────────────────────────────────────────
+
+def debug_vendas_hoje() -> dict:
+    """Retorna números brutos para diagnóstico de divergência com o Power BI."""
+    vendas = _read("fat_vendas.parquet")
+    vendas["dt_venda"] = pd.to_datetime(vendas["dt_venda"])
+    now = datetime.now()
+    hoje = vendas[vendas["dt_venda"].dt.date == now.date()]
+
+    colunas_numericas = {
+        col: round(float(hoje[col].sum()), 2)
+        for col in hoje.select_dtypes("number").columns
+        if hoje[col].sum() != 0
+    }
+
+    return {
+        "data_referencia": str(now.date()),
+        "total_linhas_hoje": len(hoje),
+        "cd_venda_unicos": int(hoje["cd_venda"].nunique()) if "cd_venda" in hoje.columns else None,
+        "vlr_venda_total_sum": round(float(hoje["vlr_venda_total"].sum()), 2) if "vlr_venda_total" in hoje.columns else None,
+        "vlr_venda_total_dedup_por_cd_venda": round(float(hoje.drop_duplicates("cd_venda")["vlr_venda_total"].sum()), 2) if "vlr_venda_total" in hoje.columns else None,
+        "colunas_do_parquet": list(vendas.columns),
+        "somas_colunas_numericas": colunas_numericas,
+        "datas_distintas_no_arquivo": sorted([str(d) for d in vendas["dt_venda"].dt.date.unique()])[-5:],
+    }
+
+
 # ─── ANÁLISE DE COMPRAS ─────────────────────────────────────────────────────
 
 def get_analise_compras(grupos: list[str] | None = None, cobertura_meses: int = 3) -> list[dict]:

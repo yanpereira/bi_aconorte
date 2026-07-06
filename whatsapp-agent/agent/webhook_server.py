@@ -10,6 +10,7 @@ from pydantic import BaseModel
 
 import config
 from agent.chat_client import chat_response, get_usage_stats
+from agent.minio_kpis import debug_vendas_hoje
 from agent.whatsapp_client import send_message
 
 log = logging.getLogger(__name__)
@@ -113,6 +114,15 @@ async def usage():
     normal_input = total["input"] - cached
     custo_usd = (normal_input / 1_000_000 * 3) + (cached / 1_000_000 * 0.30) + (total["output"] / 1_000_000 * 15)
     return {**stats, "custo_estimado_usd": round(custo_usd, 4)}
+
+
+@app.get("/debug/vendas")
+async def debug_vendas():
+    """Diagnóstico: retorna números brutos do fat_vendas para hoje."""
+    try:
+        return debug_vendas_hoje()
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
 
 
 @app.get("/health")
