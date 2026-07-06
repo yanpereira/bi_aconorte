@@ -142,19 +142,24 @@ def get_kpis(periodo: str = "mes_atual") -> dict:
 
 # ─── RANKINGS ───────────────────────────────────────────────────────────────
 
+def _prep(df: pd.DataFrame) -> pd.DataFrame:
+    """Pré-calcula custo total para evitar lambdas com referência externa."""
+    df = df.copy()
+    df["custo_total"] = df["qtd_venda"] * df["vlr_custo"]
+    return df
+
+
 def get_ranking_vendedores(periodo: str = "mes_atual", top_n: int = 5) -> list[dict]:
-    vendas = _carregar_vendas_com_nomes()
-    df = _filtrar_periodo(vendas, "dt_venda", periodo)
+    df = _prep(_filtrar_periodo(_carregar_vendas_com_nomes(), "dt_venda", periodo))
     grupo = df.groupby("nm_vendedor").agg(
         faturamento=("vlr_venda_total", "sum"),
-        custo=pd.NamedAgg(column="vlr_custo", aggfunc=lambda x: float((x * df.loc[x.index, "qtd_venda"]).sum())),
+        custo=("custo_total", "sum"),
         transacoes=("cd_venda", "nunique"),
         clientes=("cd_cliente", "nunique"),
     ).reset_index().sort_values("faturamento", ascending=False).head(top_n)
     result = []
     for i, row in enumerate(grupo.to_dict("records")):
-        fat = float(row["faturamento"])
-        custo = float(row["custo"])
+        fat, custo = float(row["faturamento"]), float(row["custo"])
         result.append({
             "posicao": i + 1,
             "vendedor": row["nm_vendedor"],
@@ -167,8 +172,7 @@ def get_ranking_vendedores(periodo: str = "mes_atual", top_n: int = 5) -> list[d
 
 
 def get_ranking_clientes(periodo: str = "mes_atual", top_n: int = 10) -> list[dict]:
-    vendas = _carregar_vendas_com_nomes()
-    df = _filtrar_periodo(vendas, "dt_venda", periodo)
+    df = _prep(_filtrar_periodo(_carregar_vendas_com_nomes(), "dt_venda", periodo))
     grupo = df.groupby(["cd_cliente", "nm_cliente"]).agg(
         faturamento=("vlr_venda_total", "sum"),
         transacoes=("cd_venda", "nunique"),
@@ -180,17 +184,15 @@ def get_ranking_clientes(periodo: str = "mes_atual", top_n: int = 10) -> list[di
 
 
 def get_ranking_produtos(periodo: str = "mes_atual", top_n: int = 10) -> list[dict]:
-    vendas = _carregar_vendas_com_nomes()
-    df = _filtrar_periodo(vendas, "dt_venda", periodo)
+    df = _prep(_filtrar_periodo(_carregar_vendas_com_nomes(), "dt_venda", periodo))
     grupo = df.groupby(["cd_produto", "ds_produto", "ds_grupo"]).agg(
         faturamento=("vlr_venda_total", "sum"),
         quantidade=("qtd_venda", "sum"),
-        custo=pd.NamedAgg(column="vlr_custo", aggfunc=lambda x: float((x * df.loc[x.index, "qtd_venda"]).sum())),
+        custo=("custo_total", "sum"),
     ).reset_index().sort_values("faturamento", ascending=False).head(top_n)
     result = []
     for i, row in enumerate(grupo.to_dict("records")):
-        fat = float(row["faturamento"])
-        custo = float(row["custo"])
+        fat, custo = float(row["faturamento"]), float(row["custo"])
         result.append({
             "posicao": i + 1,
             "produto": row["ds_produto"],
@@ -205,11 +207,9 @@ def get_ranking_produtos(periodo: str = "mes_atual", top_n: int = 10) -> list[di
 # ─── MARGENS ────────────────────────────────────────────────────────────────
 
 def get_menores_margens_cliente(periodo: str = "mes_atual", top_n: int = 5) -> list[dict]:
-    vendas = _carregar_vendas_com_nomes()
-    df = _filtrar_periodo(vendas, "dt_venda", periodo)
+    df = _prep(_filtrar_periodo(_carregar_vendas_com_nomes(), "dt_venda", periodo))
     grupo = df.groupby(["cd_cliente", "nm_cliente"]).agg(
-        faturamento=("vlr_venda_total", "sum"),
-        custo=pd.NamedAgg(column="vlr_custo", aggfunc=lambda x: float((x * df.loc[x.index, "qtd_venda"]).sum())),
+        faturamento=("vlr_venda_total", "sum"), custo=("custo_total", "sum"),
     ).reset_index()
     grupo["margem_pct"] = (grupo["faturamento"] - grupo["custo"]) / grupo["faturamento"] * 100
     grupo = grupo[grupo["faturamento"] > 0].sort_values("margem_pct").head(top_n)
@@ -220,11 +220,9 @@ def get_menores_margens_cliente(periodo: str = "mes_atual", top_n: int = 5) -> l
 
 
 def get_menores_margens_produto(periodo: str = "mes_atual", top_n: int = 5) -> list[dict]:
-    vendas = _carregar_vendas_com_nomes()
-    df = _filtrar_periodo(vendas, "dt_venda", periodo)
+    df = _prep(_filtrar_periodo(_carregar_vendas_com_nomes(), "dt_venda", periodo))
     grupo = df.groupby(["cd_produto", "ds_produto"]).agg(
-        faturamento=("vlr_venda_total", "sum"),
-        custo=pd.NamedAgg(column="vlr_custo", aggfunc=lambda x: float((x * df.loc[x.index, "qtd_venda"]).sum())),
+        faturamento=("vlr_venda_total", "sum"), custo=("custo_total", "sum"),
     ).reset_index()
     grupo["margem_pct"] = (grupo["faturamento"] - grupo["custo"]) / grupo["faturamento"] * 100
     grupo = grupo[grupo["faturamento"] > 0].sort_values("margem_pct").head(top_n)
@@ -235,21 +233,14 @@ def get_menores_margens_produto(periodo: str = "mes_atual", top_n: int = 5) -> l
 
 
 def get_margens_abaixo_threshold(threshold_pct: float = 13.0, periodo: str = "mes_atual") -> list[dict]:
-    vendas = _carregar_vendas_com_nomes()
-    df = _filtrar_periodo(vendas, "dt_venda", periodo)
+    df = _prep(_filtrar_periodo(_carregar_vendas_com_nomes(), "dt_venda", periodo))
     grupo = df.groupby(["cd_cliente", "nm_cliente", "cd_vendedor", "nm_vendedor"]).agg(
-        faturamento=("vlr_venda_total", "sum"),
-        custo=pd.NamedAgg(column="vlr_custo", aggfunc=lambda x: float((x * df.loc[x.index, "qtd_venda"]).sum())),
+        faturamento=("vlr_venda_total", "sum"), custo=("custo_total", "sum"),
     ).reset_index()
     grupo["margem_pct"] = (grupo["faturamento"] - grupo["custo"]) / grupo["faturamento"] * 100
     abaixo = grupo[(grupo["faturamento"] > 0) & (grupo["margem_pct"] < threshold_pct)].sort_values("margem_pct")
     return [
-        {
-            "cliente": r["nm_cliente"],
-            "vendedor": r["nm_vendedor"],
-            "faturamento": round(float(r["faturamento"]), 2),
-            "margem_pct": round(float(r["margem_pct"]), 1),
-        }
+        {"cliente": r["nm_cliente"], "vendedor": r["nm_vendedor"], "faturamento": round(float(r["faturamento"]), 2), "margem_pct": round(float(r["margem_pct"]), 1)}
         for r in abaixo.to_dict("records")
     ]
 
