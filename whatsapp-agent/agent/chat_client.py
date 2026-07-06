@@ -193,24 +193,23 @@ def chat_response(sender: str, message: str) -> str:
                  _usage_total["input"], _usage_total["output"])
 
         if response.stop_reason == "tool_use":
-            tool_block = next(b for b in response.content if b.type == "tool_use")
-            args = tool_block.input if isinstance(tool_block.input, dict) else {}
-            log.info("Tool use: %s args=%s (sender=%s)", tool_block.name, args, sender)
-
-            result = _executar_consulta(
-                tipo=args.get("tipo", "kpis_gerais"),
-                periodo=args.get("periodo", "mes_atual"),
-                top_n=args.get("top_n", 5),
-                grupos=args.get("grupos"),
-                threshold_margem_pct=args.get("threshold_margem_pct", 13.0),
-                cobertura_meses=args.get("cobertura_meses", 3),
-            )
+            tool_blocks = [b for b in response.content if b.type == "tool_use"]
+            tool_results = []
+            for tool_block in tool_blocks:
+                args = tool_block.input if isinstance(tool_block.input, dict) else {}
+                log.info("Tool use: %s args=%s (sender=%s)", tool_block.name, args, sender)
+                result = _executar_consulta(
+                    tipo=args.get("tipo", "kpis_gerais"),
+                    periodo=args.get("periodo", "mes_atual"),
+                    top_n=args.get("top_n", 5),
+                    grupos=args.get("grupos"),
+                    threshold_margem_pct=args.get("threshold_margem_pct", 13.0),
+                    cobertura_meses=args.get("cobertura_meses", 3),
+                )
+                tool_results.append({"type": "tool_result", "tool_use_id": tool_block.id, "content": result})
 
             history.append({"role": "assistant", "content": response.content})
-            history.append({
-                "role": "user",
-                "content": [{"type": "tool_result", "tool_use_id": tool_block.id, "content": result}],
-            })
+            history.append({"role": "user", "content": tool_results})
         else:
             text = next((b.text for b in response.content if b.type == "text"), "")
             history.append({"role": "assistant", "content": text})
