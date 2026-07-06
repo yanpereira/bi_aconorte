@@ -9,7 +9,11 @@ from pathlib import Path
 
 import anthropic
 from config import ANTHROPIC_API_KEY
-from agent.minio_kpis import get_kpis, get_ranking_vendedores, get_ranking_clientes, get_ranking_produtos
+from agent.minio_kpis import (
+    get_kpis, get_ranking_vendedores, get_ranking_clientes, get_ranking_produtos,
+    get_menores_margens_cliente, get_menores_margens_produto, get_margens_abaixo_threshold,
+    get_faturamento_diario, get_vendas_canceladas, get_analise_compras,
+)
 from agent.llm_client import _humanize_vendas, _humanize_estoque, _humanize_financeiro
 
 log = logging.getLogger(__name__)
@@ -55,25 +59,57 @@ Regras de comportamento:
 _BI_TOOL = {
     "name": "consultar_dados",
     "description": (
-        "Consulta dados do BI da Aço Norte. Use para responder qualquer pergunta "
-        "sobre vendas, rankings, estoque, financeiro ou comparativos de períodos."
+        "Consulta dados do BI da Aço Norte. Use para qualquer pergunta sobre "
+        "vendas, rankings, margens, estoque, financeiro, cancelamentos ou análise de compras. "
+        "Os filtros (por grupo, margem, período) são aplicados nos dados — não no Power BI."
     ),
     "input_schema": {
         "type": "object",
         "properties": {
             "tipo": {
                 "type": "string",
-                "enum": ["kpis_gerais", "ranking_vendedores", "ranking_clientes", "ranking_produtos", "estoque", "financeiro"],
-                "description": "Tipo de consulta: kpis_gerais para totais, ranking_* para classificações, estoque/financeiro para dados específicos"
+                "enum": [
+                    "kpis_gerais",
+                    "ranking_vendedores", "ranking_clientes", "ranking_produtos",
+                    "estoque", "financeiro",
+                    "menores_margens_cliente", "menores_margens_produto",
+                    "margens_abaixo_threshold",
+                    "faturamento_diario",
+                    "vendas_canceladas",
+                    "analise_compras",
+                ],
+                "description": (
+                    "Tipo de consulta: "
+                    "kpis_gerais=resumo geral, "
+                    "ranking_*=classificação por faturamento, "
+                    "menores_margens_*=piores margens, "
+                    "margens_abaixo_threshold=clientes/vendedores com margem abaixo de X%, "
+                    "faturamento_diario=faturamento dia a dia no mês, "
+                    "vendas_canceladas=cancelamentos do período, "
+                    "analise_compras=o que precisa comprar com cobertura simulada"
+                )
             },
             "periodo": {
                 "type": "string",
                 "enum": ["hoje", "mes_atual", "mes_anterior"],
-                "description": "Período da consulta. Padrão: mes_atual"
+                "description": "Período. Padrão: mes_atual"
             },
             "top_n": {
                 "type": "integer",
-                "description": "Quantidade de itens no ranking (padrão: 5)"
+                "description": "Qtd de itens no ranking (padrão: 5)"
+            },
+            "grupos": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": "Filtro por grupos de produto (ex: ['TELHAS', 'VERGALHÕES', 'TRELIÇAS'])"
+            },
+            "threshold_margem_pct": {
+                "type": "number",
+                "description": "Percentual mínimo de margem para filtro (ex: 13 para 13%)"
+            },
+            "cobertura_meses": {
+                "type": "integer",
+                "description": "Meses de cobertura desejados na análise de compras (padrão: 3)"
             }
         },
         "required": ["tipo"]
@@ -81,35 +117,40 @@ _BI_TOOL = {
 }
 
 
-def _executar_consulta(tipo: str, periodo: str = "mes_atual", top_n: int = 5) -> str:
+def _executar_consulta(tipo: str, periodo: str = "mes_atual", top_n: int = 5,
+                       grupos: list | None = None, threshold_margem_pct: float = 13.0,
+                       cobertura_meses: int = 3) -> str:
     try:
         now = datetime.now().strftime("%d/%m/%Y %H:%M")
 
         if tipo == "ranking_vendedores":
-            dados = get_ranking_vendedores(periodo, top_n)
-            return json.dumps({"data_hora": now, "periodo": periodo, "ranking_vendedores": dados}, ensure_ascii=False, indent=2)
-
+            return json.dumps({"data_hora": now, "periodo": periodo, "ranking_vendedores": get_ranking_vendedores(periodo, top_n)}, ensure_ascii=False, indent=2)
         if tipo == "ranking_clientes":
-            dados = get_ranking_clientes(periodo, top_n)
-            return json.dumps({"data_hora": now, "periodo": periodo, "ranking_clientes": dados}, ensure_ascii=False, indent=2)
-
+            return json.dumps({"data_hora": now, "periodo": periodo, "ranking_clientes": get_ranking_clientes(periodo, top_n)}, ensure_ascii=False, indent=2)
         if tipo == "ranking_produtos":
-            dados = get_ranking_produtos(periodo, top_n)
-            return json.dumps({"data_hora": now, "periodo": periodo, "ranking_produtos": dados}, ensure_ascii=False, indent=2)
+            return json.dumps({"data_hora": now, "periodo": periodo, "ranking_produtos": get_ranking_produtos(periodo, top_n)}, ensure_ascii=False, indent=2)
+        if tipo == "menores_margens_cliente":
+            return json.dumps({"data_hora": now, "periodo": periodo, "menores_margens_cliente": get_menores_margens_cliente(periodo, top_n)}, ensure_ascii=False, indent=2)
+        if tipo == "menores_margens_produto":
+            return json.dumps({"data_hora": now, "periodo": periodo, "menores_margens_produto": get_menores_margens_produto(periodo, top_n)}, ensure_ascii=False, indent=2)
+        if tipo == "margens_abaixo_threshold":
+            return json.dumps({"data_hora": now, "periodo": periodo, "threshold_pct": threshold_margem_pct, "resultado": get_margens_abaixo_threshold(threshold_margem_pct, periodo)}, ensure_ascii=False, indent=2)
+        if tipo == "faturamento_diario":
+            return json.dumps({"data_hora": now, **get_faturamento_diario()}, ensure_ascii=False, indent=2)
+        if tipo == "vendas_canceladas":
+            return json.dumps({"data_hora": now, "periodo": periodo, **get_vendas_canceladas(periodo)}, ensure_ascii=False, indent=2)
+        if tipo == "analise_compras":
+            return json.dumps({"data_hora": now, "cobertura_simulada_meses": cobertura_meses, "grupos_filtro": grupos, "produtos": get_analise_compras(grupos, cobertura_meses)}, ensure_ascii=False, indent=2)
 
         kpis = get_kpis(periodo)
         vendas = kpis.get("vendas", {})
-
         if tipo == "estoque":
             return json.dumps({"data_hora": now, "estoque": _humanize_estoque(kpis.get("estoque", {}))}, ensure_ascii=False, indent=2)
-
         if tipo == "financeiro":
             return json.dumps({"data_hora": now, "periodo": periodo, "financeiro": _humanize_financeiro(kpis.get("financeiro", {}))}, ensure_ascii=False, indent=2)
 
-        # kpis_gerais
         return json.dumps({
-            "data_hora": now,
-            "periodo": periodo,
+            "data_hora": now, "periodo": periodo,
             "vendas_hoje": json.loads(_humanize_vendas(vendas.get("hoje", {}))),
             "vendas_periodo": json.loads(_humanize_vendas(vendas.get("mes", {}))),
             "estoque": json.loads(_humanize_estoque(kpis.get("estoque", {}))),
@@ -160,6 +201,9 @@ def chat_response(sender: str, message: str) -> str:
                 tipo=args.get("tipo", "kpis_gerais"),
                 periodo=args.get("periodo", "mes_atual"),
                 top_n=args.get("top_n", 5),
+                grupos=args.get("grupos"),
+                threshold_margem_pct=args.get("threshold_margem_pct", 13.0),
+                cobertura_meses=args.get("cobertura_meses", 3),
             )
 
             history.append({"role": "assistant", "content": response.content})
