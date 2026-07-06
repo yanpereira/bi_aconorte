@@ -309,11 +309,17 @@ def debug_vendas_hoje() -> dict:
     now = datetime.now()
     hoje = vendas[vendas["dt_venda"].dt.date == now.date()]
 
-    colunas_numericas = {
-        col: round(float(hoje[col].sum()), 2)
-        for col in hoje.select_dtypes("number").columns
-        if hoje[col].sum() != 0
-    }
+    # Soma apenas colunas genuinamente numéricas (exclui timedelta, datetime)
+    somas = {}
+    for col in hoje.columns:
+        try:
+            dtype = hoje[col].dtype
+            if pd.api.types.is_float_dtype(dtype) or pd.api.types.is_integer_dtype(dtype):
+                s = float(hoje[col].sum())
+                if s != 0:
+                    somas[col] = round(s, 2)
+        except Exception:
+            pass
 
     return {
         "data_referencia": str(now.date()),
@@ -322,7 +328,7 @@ def debug_vendas_hoje() -> dict:
         "vlr_venda_total_sum": round(float(hoje["vlr_venda_total"].sum()), 2) if "vlr_venda_total" in hoje.columns else None,
         "vlr_venda_total_dedup_por_cd_venda": round(float(hoje.drop_duplicates("cd_venda")["vlr_venda_total"].sum()), 2) if "vlr_venda_total" in hoje.columns else None,
         "colunas_do_parquet": list(vendas.columns),
-        "somas_colunas_numericas": colunas_numericas,
+        "somas_colunas_numericas": somas,
         "datas_distintas_no_arquivo": sorted([str(d) for d in vendas["dt_venda"].dt.date.unique()])[-5:],
     }
 
