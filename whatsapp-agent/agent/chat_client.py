@@ -5,6 +5,8 @@ Mantém histórico por remetente (in-memory, limitado a _MAX_TURNS turnos).
 import json
 import logging
 from datetime import datetime
+from zoneinfo import ZoneInfo
+import config
 from pathlib import Path
 
 import anthropic
@@ -132,7 +134,7 @@ def _executar_consulta(tipo: str, periodo: str = "mes_atual", top_n: int = 5,
                        grupos: list | None = None, threshold_margem_pct: float = 13.0,
                        cobertura_meses: int = 3) -> str:
     try:
-        now = datetime.now().strftime("%d/%m/%Y %H:%M")
+    now = datetime.now(ZoneInfo(config.TIMEZONE)).strftime("%d/%m/%Y %H:%M")
 
         if tipo == "ranking_vendedores":
             return json.dumps({"data_hora": now, "periodo": periodo, "ranking_vendedores": get_ranking_vendedores(periodo, top_n)}, ensure_ascii=False, indent=2)

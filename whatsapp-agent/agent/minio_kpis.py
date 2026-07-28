@@ -2,7 +2,9 @@
 Calcula KPIs e relatórios a partir dos arquivos Parquet no MinIO.
 """
 import io
+import logging
 from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
 from typing import Optional
 
 import urllib3
@@ -12,6 +14,8 @@ from minio import Minio
 import config
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+log = logging.getLogger(__name__)
 
 _minio: Optional[Minio] = None
 
@@ -37,7 +41,7 @@ def _read(name: str) -> pd.DataFrame:
 
 
 def _filtrar_periodo(df: pd.DataFrame, coluna: str, periodo: str) -> pd.DataFrame:
-    now = datetime.now()
+    now = datetime.now(ZoneInfo(config.TIMEZONE))
     df = df.copy()
     df[coluna] = pd.to_datetime(df[coluna])
     if periodo == "hoje":
@@ -86,7 +90,7 @@ def _resumo_vendas(df: pd.DataFrame) -> dict:
 # ─── KPIs GERAIS ────────────────────────────────────────────────────────────
 
 def get_kpis(periodo: str = "mes_atual") -> dict:
-    now = datetime.now()
+    now = datetime.now(ZoneInfo(config.TIMEZONE))
     result: dict = {}
 
     try:
@@ -251,7 +255,7 @@ def get_margens_abaixo_threshold(threshold_pct: float = 13.0, periodo: str = "me
 def get_faturamento_diario() -> dict:
     vendas = _read("fat_vendas.parquet")
     vendas["dt_venda"] = pd.to_datetime(vendas["dt_venda"])
-    now = datetime.now()
+    now = datetime.now(ZoneInfo(config.TIMEZONE))
     mes = vendas[(vendas["dt_venda"].dt.year == now.year) & (vendas["dt_venda"].dt.month == now.month)]
     por_dia = mes.groupby(mes["dt_venda"].dt.date).agg(
         faturamento=("vlr_venda_total", "sum"),
@@ -307,8 +311,15 @@ def debug_vendas_hoje() -> dict:
     """Retorna números brutos para diagnóstico de divergência com o Power BI."""
     vendas = _read("fat_vendas.parquet")
     vendas["dt_venda"] = pd.to_datetime(vendas["dt_venda"])
-    now = datetime.now()
+    now = datetime.now(ZoneInfo(config.TIMEZONE))
     hoje = vendas[vendas["dt_venda"].dt.date == now.date()]
+
+    # Diagnostic logging: record reference time and most recent dates found in the parquet
+    try:
+        latest_dates = sorted([d for d in vendas["dt_venda"].dt.date.unique() if not pd.isna(d)])
+        log.debug("debug_vendas_hoje: now=%s latest_parquet_dates=%s total_linhas_hoje=%d", now.isoformat(), latest_dates[-5:], len(hoje))
+    except Exception:
+        log.debug("debug_vendas_hoje: failed to compute latest_parquet_dates")
 
     # Soma apenas colunas genuinamente numéricas (exclui timedelta, datetime)
     somas = {}
@@ -338,7 +349,7 @@ def debug_vendas_hoje() -> dict:
 
 def get_analise_compras(grupos: list[str] | None = None, cobertura_meses: int = 3) -> list[dict]:
     """Produtos ativos com venda média (90 dias) e simulação de cobertura."""
-    now = datetime.now()
+    now = datetime.now(ZoneInfo(config.TIMEZONE))
     dias_90 = now - timedelta(days=90)
 
     vendas = _read("fat_vendas.parquet")

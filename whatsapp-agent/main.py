@@ -17,6 +17,7 @@ import argparse
 import logging
 import sys
 from datetime import datetime
+from zoneinfo import ZoneInfo
 
 import uvicorn
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -37,7 +38,7 @@ log = logging.getLogger(__name__)
 
 
 def run_report() -> None:
-    log.info("Iniciando ciclo de relatório — %s", datetime.now().strftime("%d/%m/%Y %H:%M"))
+    log.info("Iniciando ciclo de relatório — %s", datetime.now(ZoneInfo(config.TIMEZONE)).strftime("%d/%m/%Y %H:%M"))
 
     if not check_instance():
         log.error("Evolution API não conectada. Verifique a instância '%s'.", config.EVOLUTION_INSTANCE)

@@ -4,6 +4,8 @@ em um relatório em linguagem natural, pronto para envio no WhatsApp.
 """
 import json
 from datetime import datetime
+from zoneinfo import ZoneInfo
+import config
 import anthropic
 from config import ANTHROPIC_API_KEY
 
@@ -103,7 +105,7 @@ def _humanize_financeiro(d: dict) -> str:
 
 def generate_report(kpis: dict) -> str:
     """Recebe os KPIs agrupados e retorna o texto do relatório para WhatsApp."""
-    now = datetime.now().strftime("%d/%m/%Y %H:%M")
+    now = datetime.now(ZoneInfo(config.TIMEZONE)).strftime("%d/%m/%Y %H:%M")
     vendas = kpis.get("vendas", {})
     vendas_mes = vendas.get("mes", vendas)  # compatível com estrutura antiga
     user_message = _USER_TEMPLATE.format(
