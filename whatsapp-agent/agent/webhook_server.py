@@ -2,14 +2,17 @@
 Servidor webhook FastAPI — recebe mensagens da Evolution API e responde via Claude.
 Também expõe POST /chat para o web app compras-aconorte.
 """
+import io
 import logging
 
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 import config
 from agent.chat_client import chat_response, get_usage_stats
+from agent.excel_export import gerar_excel
 from agent.minio_kpis import debug_vendas_hoje
 from agent.whatsapp_client import send_message
 
@@ -114,6 +117,41 @@ async def usage():
     normal_input = total["input"] - cached
     custo_usd = (normal_input / 1_000_000 * 3) + (cached / 1_000_000 * 0.30) + (total["output"] / 1_000_000 * 15)
     return {**stats, "custo_estimado_usd": round(custo_usd, 4)}
+
+
+@app.get("/relatorio/excel")
+async def relatorio_excel(
+    tipo: str = "kpis_gerais",
+    periodo: str = "mes_atual",
+    data: str | None = None,
+    top_n: int = 5,
+    grupos: str | None = None,
+    threshold_margem_pct: float = 13.0,
+    cobertura_meses: int = 3,
+):
+    """
+    Gera um .xlsx do relatório pedido, aplicando os mesmos filtros da consulta via chat.
+    `periodo=dia_especifico` + `data=AAAA-MM-DD` gera o relatório de um dia qualquer do mês.
+    `grupos` é uma lista separada por vírgula (ex.: TELHAS,VERGALHÕES).
+    """
+    try:
+        grupos_lista = [g.strip() for g in grupos.split(",")] if grupos else None
+        conteudo = gerar_excel(
+            tipo=tipo, periodo=periodo, data=data, top_n=top_n,
+            grupos=grupos_lista, threshold_margem_pct=threshold_margem_pct,
+            cobertura_meses=cobertura_meses,
+        )
+    except Exception as exc:
+        log.error("Erro ao gerar Excel (tipo=%s periodo=%s data=%s): %s", tipo, periodo, data, exc)
+        raise HTTPException(status_code=500, detail=str(exc))
+
+    sufixo_data = f"_{data}" if data else ""
+    nome_arquivo = f"{tipo}_{periodo}{sufixo_data}.xlsx"
+    return StreamingResponse(
+        io.BytesIO(conteudo),
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f'attachment; filename="{nome_arquivo}"'},
+    )
 
 
 @app.get("/debug/vendas")

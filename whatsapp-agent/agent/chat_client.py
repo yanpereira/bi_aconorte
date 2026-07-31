@@ -4,6 +4,7 @@ Mantém histórico por remetente (in-memory, limitado a _MAX_TURNS turnos).
 """
 import json
 import logging
+import urllib.parse
 from datetime import datetime
 from zoneinfo import ZoneInfo
 import config
@@ -54,6 +55,8 @@ Regras de comportamento:
 - O Power BI é o painel visual — você é o assistente que TRAZ os dados em texto/tabela/gráfico na conversa
 - Quando o usuário fizer MÚLTIPLAS perguntas de uma vez, responda UMA por vez e ao final pergunte: "Quer ver o próximo relatório?"
 - Se precisar de dados, chame a ferramenta antes de responder
+- Quando o usuário pedir dados de um dia específico do mês (ex: "margens do dia 15", "vendas de 15/07"), use consultar_dados com periodo="dia_especifico" e data="AAAA-MM-DD" (use o ano/mês atual informado no contexto abaixo se o usuário não especificar)
+- Quando o usuário pedir para "gerar", "exportar", "baixar" ou "salvar em Excel/planilha" um relatório, use a ferramenta exportar_planilha_excel com os mesmos filtros já discutidos na conversa, e devolva o link como um markdown de download (ex: "[Baixar planilha](url)")
 
 Formato de gráfico (use quando os dados ficam mais claros visualmente):
 - Rankings, comparativos e faturamento diário: use o bloco especial abaixo
@@ -104,8 +107,12 @@ _BI_TOOL = {
             },
             "periodo": {
                 "type": "string",
-                "enum": ["hoje", "mes_atual", "mes_anterior"],
-                "description": "Período. Padrão: mes_atual"
+                "enum": ["hoje", "mes_atual", "mes_anterior", "dia_especifico"],
+                "description": "Período. Padrão: mes_atual. Use 'dia_especifico' junto com o parâmetro 'data' para consultar qualquer dia do mês."
+            },
+            "data": {
+                "type": "string",
+                "description": "Data no formato AAAA-MM-DD. Só é usado quando periodo='dia_especifico' (ex: usuário pergunta 'margens do dia 15/07/2026')."
             },
             "top_n": {
                 "type": "integer",
@@ -129,33 +136,58 @@ _BI_TOOL = {
     }
 }
 
+_EXCEL_TOOL = {
+    "name": "exportar_planilha_excel",
+    "description": (
+        "Gera o link para baixar em Excel (.xlsx) o mesmo relatório que consultar_dados traria, "
+        "aplicando os mesmos filtros (tipo, período, dia específico, grupos, threshold de margem). "
+        "Use quando o usuário pedir para gerar, exportar, baixar ou salvar em Excel/planilha."
+    ),
+    "input_schema": _BI_TOOL["input_schema"],
+}
 
-def _executar_consulta(tipo: str, periodo: str = "mes_atual", top_n: int = 5,
+
+def _gerar_link_excel(tipo: str, periodo: str = "mes_atual", data: str | None = None, top_n: int = 5,
+                       grupos: list | None = None, threshold_margem_pct: float = 13.0,
+                       cobertura_meses: int = 3) -> str:
+    params = {
+        "tipo": tipo, "periodo": periodo, "top_n": top_n,
+        "threshold_margem_pct": threshold_margem_pct, "cobertura_meses": cobertura_meses,
+    }
+    if data:
+        params["data"] = data
+    if grupos:
+        params["grupos"] = ",".join(grupos)
+    url = "/relatorio/excel?" + urllib.parse.urlencode(params)
+    return json.dumps({"url_excel": url}, ensure_ascii=False)
+
+
+def _executar_consulta(tipo: str, periodo: str = "mes_atual", data: str | None = None, top_n: int = 5,
                        grupos: list | None = None, threshold_margem_pct: float = 13.0,
                        cobertura_meses: int = 3) -> str:
     try:
-    now = datetime.now(ZoneInfo(config.TIMEZONE)).strftime("%d/%m/%Y %H:%M")
+        now = datetime.now(ZoneInfo(config.TIMEZONE)).strftime("%d/%m/%Y %H:%M")
 
         if tipo == "ranking_vendedores":
-            return json.dumps({"data_hora": now, "periodo": periodo, "ranking_vendedores": get_ranking_vendedores(periodo, top_n)}, ensure_ascii=False, indent=2)
+            return json.dumps({"data_hora": now, "periodo": periodo, "ranking_vendedores": get_ranking_vendedores(periodo, top_n, data=data)}, ensure_ascii=False, indent=2)
         if tipo == "ranking_clientes":
-            return json.dumps({"data_hora": now, "periodo": periodo, "ranking_clientes": get_ranking_clientes(periodo, top_n)}, ensure_ascii=False, indent=2)
+            return json.dumps({"data_hora": now, "periodo": periodo, "ranking_clientes": get_ranking_clientes(periodo, top_n, data=data)}, ensure_ascii=False, indent=2)
         if tipo == "ranking_produtos":
-            return json.dumps({"data_hora": now, "periodo": periodo, "ranking_produtos": get_ranking_produtos(periodo, top_n)}, ensure_ascii=False, indent=2)
+            return json.dumps({"data_hora": now, "periodo": periodo, "ranking_produtos": get_ranking_produtos(periodo, top_n, data=data)}, ensure_ascii=False, indent=2)
         if tipo == "menores_margens_cliente":
-            return json.dumps({"data_hora": now, "periodo": periodo, "menores_margens_cliente": get_menores_margens_cliente(periodo, top_n)}, ensure_ascii=False, indent=2)
+            return json.dumps({"data_hora": now, "periodo": periodo, "menores_margens_cliente": get_menores_margens_cliente(periodo, top_n, data=data)}, ensure_ascii=False, indent=2)
         if tipo == "menores_margens_produto":
-            return json.dumps({"data_hora": now, "periodo": periodo, "menores_margens_produto": get_menores_margens_produto(periodo, top_n)}, ensure_ascii=False, indent=2)
+            return json.dumps({"data_hora": now, "periodo": periodo, "menores_margens_produto": get_menores_margens_produto(periodo, top_n, data=data)}, ensure_ascii=False, indent=2)
         if tipo == "margens_abaixo_threshold":
-            return json.dumps({"data_hora": now, "periodo": periodo, "threshold_pct": threshold_margem_pct, "resultado": get_margens_abaixo_threshold(threshold_margem_pct, periodo)}, ensure_ascii=False, indent=2)
+            return json.dumps({"data_hora": now, "periodo": periodo, "threshold_pct": threshold_margem_pct, "resultado": get_margens_abaixo_threshold(threshold_margem_pct, periodo, data=data)}, ensure_ascii=False, indent=2)
         if tipo == "faturamento_diario":
             return json.dumps({"data_hora": now, **get_faturamento_diario()}, ensure_ascii=False, indent=2)
         if tipo == "vendas_canceladas":
-            return json.dumps({"data_hora": now, "periodo": periodo, **get_vendas_canceladas(periodo)}, ensure_ascii=False, indent=2)
+            return json.dumps({"data_hora": now, "periodo": periodo, **get_vendas_canceladas(periodo, data=data)}, ensure_ascii=False, indent=2)
         if tipo == "analise_compras":
             return json.dumps({"data_hora": now, "cobertura_simulada_meses": cobertura_meses, "grupos_filtro": grupos, "produtos": get_analise_compras(grupos, cobertura_meses)}, ensure_ascii=False, indent=2)
 
-        kpis = get_kpis(periodo)
+        kpis = get_kpis(periodo, data=data)
         vendas = kpis.get("vendas", {})
         if tipo == "estoque":
             return json.dumps({"data_hora": now, "estoque": _humanize_estoque(kpis.get("estoque", {}))}, ensure_ascii=False, indent=2)
@@ -174,19 +206,44 @@ def _executar_consulta(tipo: str, periodo: str = "mes_atual", top_n: int = 5,
         return json.dumps({"erro": f"Não foi possível buscar os dados: {exc}"})
 
 
+# Comandos padrão: atalhos de texto que expandem para a frase completa, para não
+# precisar digitá-la toda vez (ex.: um botão no app pode simplesmente enviar "margens5").
+_COMANDOS_PADRAO = {
+    "margens5": "Faça o relatório das 5 menores % margens de produtos e clientes de hoje, coloque também faturamento e margem bruta",
+    "/margens5": "Faça o relatório das 5 menores % margens de produtos e clientes de hoje, coloque também faturamento e margem bruta",
+}
+
+
+def _expandir_comando_padrao(texto: str) -> str:
+    return _COMANDOS_PADRAO.get(texto.strip().lower(), texto)
+
+
 def chat_response(sender: str, message: str) -> str:
+    message = _expandir_comando_padrao(message)
+
     history = _histories.setdefault(sender, [])
     history.append({"role": "user", "content": message})
 
     if len(history) > _MAX_TURNS * 2:
         history[:] = history[-(_MAX_TURNS * 2):]
 
+    now = datetime.now(ZoneInfo(config.TIMEZONE))
+    dias_semana = ["segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sábado", "domingo"]
+    contexto_data = (
+        f"Contexto atual: hoje é {dias_semana[now.weekday()]}, {now.strftime('%d/%m/%Y')} "
+        f"({now.strftime('%H:%M')}, fuso {config.TIMEZONE}). "
+        "Use esse ano/mês quando o usuário citar um dia do mês sem especificar qual mês."
+    )
+
     for _ in range(5):
         response = _client.messages.create(
             model="claude-sonnet-4-6",
             max_tokens=1024,
-            system=[{"type": "text", "text": _SYSTEM, "cache_control": {"type": "ephemeral"}}],
-            tools=[_BI_TOOL],
+            system=[
+                {"type": "text", "text": _SYSTEM, "cache_control": {"type": "ephemeral"}},
+                {"type": "text", "text": contexto_data},
+            ],
+            tools=[_BI_TOOL, _EXCEL_TOOL],
             messages=history,
         )
 
@@ -211,9 +268,11 @@ def chat_response(sender: str, message: str) -> str:
             for tool_block in tool_blocks:
                 args = tool_block.input if isinstance(tool_block.input, dict) else {}
                 log.info("Tool use: %s args=%s (sender=%s)", tool_block.name, args, sender)
-                result = _executar_consulta(
+                funcao = _gerar_link_excel if tool_block.name == "exportar_planilha_excel" else _executar_consulta
+                result = funcao(
                     tipo=args.get("tipo", "kpis_gerais"),
                     periodo=args.get("periodo", "mes_atual"),
+                    data=args.get("data"),
                     top_n=args.get("top_n", 5),
                     grupos=args.get("grupos"),
                     threshold_margem_pct=args.get("threshold_margem_pct", 13.0),

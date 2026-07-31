@@ -40,10 +40,13 @@ def _read(name: str) -> pd.DataFrame:
     return df
 
 
-def _filtrar_periodo(df: pd.DataFrame, coluna: str, periodo: str) -> pd.DataFrame:
+def _filtrar_periodo(df: pd.DataFrame, coluna: str, periodo: str, data: str | None = None) -> pd.DataFrame:
     now = datetime.now(ZoneInfo(config.TIMEZONE))
     df = df.copy()
     df[coluna] = pd.to_datetime(df[coluna])
+    if periodo == "dia_especifico" and data:
+        dia = datetime.strptime(data, "%Y-%m-%d").date()
+        return df[df[coluna].dt.date == dia]
     if periodo == "hoje":
         return df[df[coluna].dt.date == now.date()]
     if periodo == "mes_anterior":
@@ -89,14 +92,14 @@ def _resumo_vendas(df: pd.DataFrame) -> dict:
 
 # ─── KPIs GERAIS ────────────────────────────────────────────────────────────
 
-def get_kpis(periodo: str = "mes_atual") -> dict:
+def get_kpis(periodo: str = "mes_atual", data: str | None = None) -> dict:
     now = datetime.now(ZoneInfo(config.TIMEZONE))
     result: dict = {}
 
     try:
         vendas = _carregar_vendas_com_nomes()
         cur_dia = vendas[vendas["dt_venda"].dt.date == now.date()]
-        cur_per = _filtrar_periodo(vendas, "dt_venda", periodo)
+        cur_per = _filtrar_periodo(vendas, "dt_venda", periodo, data=data)
 
         prev_m = now.month - 1 if now.month > 1 else 12
         prev_y = now.year if now.month > 1 else now.year - 1
@@ -154,8 +157,8 @@ def _prep(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def get_ranking_vendedores(periodo: str = "mes_atual", top_n: int = 5) -> list[dict]:
-    df = _prep(_filtrar_periodo(_carregar_vendas_com_nomes(), "dt_venda", periodo))
+def get_ranking_vendedores(periodo: str = "mes_atual", top_n: int = 5, data: str | None = None) -> list[dict]:
+    df = _prep(_filtrar_periodo(_carregar_vendas_com_nomes(), "dt_venda", periodo, data=data))
     grupo = df.groupby("nm_vendedor").agg(
         faturamento=("vlr_venda_total", "sum"),
         custo=("custo_total", "sum"),
@@ -176,8 +179,8 @@ def get_ranking_vendedores(periodo: str = "mes_atual", top_n: int = 5) -> list[d
     return result
 
 
-def get_ranking_clientes(periodo: str = "mes_atual", top_n: int = 10) -> list[dict]:
-    df = _prep(_filtrar_periodo(_carregar_vendas_com_nomes(), "dt_venda", periodo))
+def get_ranking_clientes(periodo: str = "mes_atual", top_n: int = 10, data: str | None = None) -> list[dict]:
+    df = _prep(_filtrar_periodo(_carregar_vendas_com_nomes(), "dt_venda", periodo, data=data))
     grupo = df.groupby(["cd_cliente", "nm_cliente"]).agg(
         faturamento=("vlr_venda_total", "sum"),
         transacoes=("cd_venda", "nunique"),
@@ -188,8 +191,8 @@ def get_ranking_clientes(periodo: str = "mes_atual", top_n: int = 10) -> list[di
     ]
 
 
-def get_ranking_produtos(periodo: str = "mes_atual", top_n: int = 10) -> list[dict]:
-    df = _prep(_filtrar_periodo(_carregar_vendas_com_nomes(), "dt_venda", periodo))
+def get_ranking_produtos(periodo: str = "mes_atual", top_n: int = 10, data: str | None = None) -> list[dict]:
+    df = _prep(_filtrar_periodo(_carregar_vendas_com_nomes(), "dt_venda", periodo, data=data))
     grupo = df.groupby(["cd_produto", "ds_produto", "ds_grupo"]).agg(
         faturamento=("vlr_venda_total", "sum"),
         quantidade=("qtd_venda", "sum"),
@@ -211,8 +214,8 @@ def get_ranking_produtos(periodo: str = "mes_atual", top_n: int = 10) -> list[di
 
 # ─── MARGENS ────────────────────────────────────────────────────────────────
 
-def get_menores_margens_cliente(periodo: str = "mes_atual", top_n: int = 5) -> list[dict]:
-    df = _prep(_filtrar_periodo(_carregar_vendas_com_nomes(), "dt_venda", periodo))
+def get_menores_margens_cliente(periodo: str = "mes_atual", top_n: int = 5, data: str | None = None) -> list[dict]:
+    df = _prep(_filtrar_periodo(_carregar_vendas_com_nomes(), "dt_venda", periodo, data=data))
     grupo = df.groupby(["cd_cliente", "nm_cliente"]).agg(
         faturamento=("vlr_venda_total", "sum"), custo=("custo_total", "sum"),
     ).reset_index()
@@ -224,8 +227,8 @@ def get_menores_margens_cliente(periodo: str = "mes_atual", top_n: int = 5) -> l
     ]
 
 
-def get_menores_margens_produto(periodo: str = "mes_atual", top_n: int = 5) -> list[dict]:
-    df = _prep(_filtrar_periodo(_carregar_vendas_com_nomes(), "dt_venda", periodo))
+def get_menores_margens_produto(periodo: str = "mes_atual", top_n: int = 5, data: str | None = None) -> list[dict]:
+    df = _prep(_filtrar_periodo(_carregar_vendas_com_nomes(), "dt_venda", periodo, data=data))
     grupo = df.groupby(["cd_produto", "ds_produto"]).agg(
         faturamento=("vlr_venda_total", "sum"), custo=("custo_total", "sum"),
     ).reset_index()
@@ -237,8 +240,8 @@ def get_menores_margens_produto(periodo: str = "mes_atual", top_n: int = 5) -> l
     ]
 
 
-def get_margens_abaixo_threshold(threshold_pct: float = 13.0, periodo: str = "mes_atual") -> list[dict]:
-    df = _prep(_filtrar_periodo(_carregar_vendas_com_nomes(), "dt_venda", periodo))
+def get_margens_abaixo_threshold(threshold_pct: float = 13.0, periodo: str = "mes_atual", data: str | None = None) -> list[dict]:
+    df = _prep(_filtrar_periodo(_carregar_vendas_com_nomes(), "dt_venda", periodo, data=data))
     grupo = df.groupby(["cd_cliente", "nm_cliente", "cd_vendedor", "nm_vendedor"]).agg(
         faturamento=("vlr_venda_total", "sum"), custo=("custo_total", "sum"),
     ).reset_index()
@@ -277,7 +280,7 @@ def get_faturamento_diario() -> dict:
 
 # ─── VENDAS CANCELADAS ──────────────────────────────────────────────────────
 
-def get_vendas_canceladas(periodo: str = "mes_atual") -> dict:
+def get_vendas_canceladas(periodo: str = "mes_atual", data: str | None = None) -> dict:
     canceladas = _read("fat_vendas_canceladas.parquet")
     produtos = _read("dim_produtos.parquet")[["cd_produto", "ds_produto", "ds_grupo"]]
     pessoas = _read("dim_pessoas.parquet")[["cd_pessoa", "ds_pessoa"]]
@@ -287,7 +290,7 @@ def get_vendas_canceladas(periodo: str = "mes_atual") -> dict:
     canceladas = canceladas.merge(clientes, on="cd_cliente", how="left")
     canceladas = canceladas.merge(vendedores, on="cd_vendedor", how="left")
 
-    df = _filtrar_periodo(canceladas, "dt_venda", periodo)
+    df = _filtrar_periodo(canceladas, "dt_venda", periodo, data=data)
     total_vlr = float(df["vlr_venda_total"].sum())
     qtd_pedidos = int(df["cd_venda"].nunique())
 
