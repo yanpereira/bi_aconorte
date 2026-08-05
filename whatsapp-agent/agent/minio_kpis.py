@@ -49,6 +49,10 @@ def _filtrar_periodo(df: pd.DataFrame, coluna: str, periodo: str, data: str | No
         return df[df[coluna].dt.date == dia]
     if periodo == "hoje":
         return df[df[coluna].dt.date == now.date()]
+    if periodo == "ontem":
+        return df[df[coluna].dt.date == (now.date() - timedelta(days=1))]
+    if periodo == "anteontem":
+        return df[df[coluna].dt.date == (now.date() - timedelta(days=2))]
     if periodo == "mes_anterior":
         m = now.month - 1 if now.month > 1 else 12
         y = now.year if now.month > 1 else now.year - 1

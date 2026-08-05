@@ -4,6 +4,7 @@ Mantém histórico por remetente (in-memory, limitado a _MAX_TURNS turnos).
 """
 import json
 import logging
+import re
 import urllib.parse
 from datetime import datetime
 from zoneinfo import ZoneInfo
@@ -12,6 +13,7 @@ from pathlib import Path
 
 import anthropic
 from config import ANTHROPIC_API_KEY
+from agent import atalhos_store
 from agent.minio_kpis import (
     get_kpis, get_ranking_vendedores, get_ranking_clientes, get_ranking_produtos,
     get_menores_margens_cliente, get_menores_margens_produto, get_margens_abaixo_threshold,
@@ -56,7 +58,9 @@ Regras de comportamento:
 - Quando o usuário fizer MÚLTIPLAS perguntas de uma vez, responda UMA por vez e ao final pergunte: "Quer ver o próximo relatório?"
 - Se precisar de dados, chame a ferramenta antes de responder
 - Quando o usuário pedir dados de um dia específico do mês (ex: "margens do dia 15", "vendas de 15/07"), use consultar_dados com periodo="dia_especifico" e data="AAAA-MM-DD" (use o ano/mês atual informado no contexto abaixo se o usuário não especificar)
+- IMPORTANTE — datas relativas: use periodo="hoje" para "hoje", periodo="ontem" para "ontem" e periodo="anteontem" para "anteontem" — o servidor calcula a data certa, não tente calcular essas datas você mesmo nem use dia_especifico para elas. Ao escrever a resposta, use a data mostrada em "data_referencia"/"data_hora" do resultado da ferramenta (não invente a data de cabeça).
 - Quando o usuário pedir para "gerar", "exportar", "baixar" ou "salvar em Excel/planilha" um relatório, use a ferramenta exportar_planilha_excel com os mesmos filtros já discutidos na conversa, e devolva o link como um markdown de download (ex: "[Baixar planilha](url)")
+- O usuário pode salvar perguntas frequentes como atalhos, sem sua ajuda: "/salvar nome = pergunta completa" salva, "/nome" usa o atalho depois, "/atalhos" lista os salvos, "/apagar nome" remove. Se alguém perguntar como reusar uma pergunta sem digitar tudo de novo, explique esse formato.
 
 Formato de gráfico (use quando os dados ficam mais claros visualmente):
 - Rankings, comparativos e faturamento diário: use o bloco especial abaixo
@@ -107,8 +111,8 @@ _BI_TOOL = {
             },
             "periodo": {
                 "type": "string",
-                "enum": ["hoje", "mes_atual", "mes_anterior", "dia_especifico"],
-                "description": "Período. Padrão: mes_atual. Use 'dia_especifico' junto com o parâmetro 'data' para consultar qualquer dia do mês."
+                "enum": ["hoje", "ontem", "anteontem", "mes_atual", "mes_anterior", "dia_especifico"],
+                "description": "Período. Padrão: mes_atual. Use 'ontem'/'anteontem' para os dias relativos (o servidor calcula a data — nunca calcule 'ontem' manualmente com dia_especifico). Use 'dia_especifico' junto com o parâmetro 'data' para qualquer outro dia do mês."
             },
             "data": {
                 "type": "string",
@@ -158,7 +162,13 @@ def _gerar_link_excel(tipo: str, periodo: str = "mes_atual", data: str | None = 
         params["data"] = data
     if grupos:
         params["grupos"] = ",".join(grupos)
-    url = "/relatorio/excel?" + urllib.parse.urlencode(params)
+    caminho = "/relatorio/excel?" + urllib.parse.urlencode(params)
+    if config.PUBLIC_BASE_URL:
+        url = config.PUBLIC_BASE_URL + caminho
+    else:
+        # Sem PUBLIC_BASE_URL configurada, o link fica relativo e não abre no WhatsApp.
+        log.warning("PUBLIC_BASE_URL não configurada — link de Excel será relativo e pode não funcionar no WhatsApp")
+        url = caminho
     return json.dumps({"url_excel": url}, ensure_ascii=False)
 
 
@@ -208,17 +218,90 @@ def _executar_consulta(tipo: str, periodo: str = "mes_atual", data: str | None =
 
 # Comandos padrão: atalhos de texto que expandem para a frase completa, para não
 # precisar digitá-la toda vez (ex.: um botão no app pode simplesmente enviar "margens5").
+# Além destes fixos, qualquer usuário pode criar os seus próprios com /salvar — ver
+# _tratar_comando_atalho abaixo e agent/atalhos_store.py.
 _COMANDOS_PADRAO = {
     "margens5": "Faça o relatório das 5 menores % margens de produtos e clientes de hoje, coloque também faturamento e margem bruta",
-    "/margens5": "Faça o relatório das 5 menores % margens de produtos e clientes de hoje, coloque também faturamento e margem bruta",
 }
+
+_RE_SALVAR_ATALHO = re.compile(r"^/salvar\s+([^\s=:]+)\s*[:=]\s*(.+)$", re.IGNORECASE | re.DOTALL)
+_RE_APAGAR_ATALHO = re.compile(r"^/apagar\s+(\S+)$", re.IGNORECASE)
 
 
 def _expandir_comando_padrao(texto: str) -> str:
-    return _COMANDOS_PADRAO.get(texto.strip().lower(), texto)
+    chave = atalhos_store.nome_normalizado(texto)
+    if not chave:
+        return texto
+    if chave in _COMANDOS_PADRAO:
+        return _COMANDOS_PADRAO[chave]
+    try:
+        pergunta_salva = atalhos_store.carregar_atalhos().get(chave)
+    except Exception as e:
+        log.warning("Falha ao consultar atalhos salvos: %s", e)
+        pergunta_salva = None
+    return pergunta_salva or texto
+
+
+def _tratar_comando_atalho(message: str) -> str | None:
+    """
+    Trata comandos de gestão de atalhos sem chamar o Claude:
+      /salvar nome = pergunta completa   → salva
+      /atalhos                           → lista os salvos
+      /apagar nome                       → remove
+    Retorna a resposta pronta, ou None se a mensagem não for um desses comandos
+    (nesse caso o fluxo normal de chat_response continua).
+    """
+    texto = message.strip()
+    baixo = texto.lower()
+
+    if baixo in ("/atalhos", "/meusatalhos", "/comandos"):
+        atalhos = {**_COMANDOS_PADRAO, **atalhos_store.carregar_atalhos()}
+        if not atalhos:
+            return "Você ainda não tem atalhos salvos. Para criar um, envie:\n/salvar nome = sua pergunta completa"
+        linhas = [f"• */{nome}* → {pergunta}" for nome, pergunta in sorted(atalhos.items())]
+        return (
+            "📌 *Atalhos salvos:*\n" + "\n".join(linhas) +
+            "\n\nPara usar, é só mandar /nome. Para criar outro: /salvar nome = pergunta. Para apagar: /apagar nome"
+        )
+
+    m = _RE_SALVAR_ATALHO.match(texto)
+    if m:
+        nome_bruto, pergunta = m.groups()
+        try:
+            nome = atalhos_store.salvar_atalho(nome_bruto, pergunta)
+        except ValueError as e:
+            return f"⚠️ {e}"
+        except Exception as e:
+            log.error("Erro ao salvar atalho: %s", e)
+            return "⚠️ Não consegui salvar o atalho agora, tenta de novo daqui a pouco."
+        return f"✅ Atalho */{nome}* salvo! É só mandar */{nome}* que eu já trago essa pergunta pra você."
+
+    m = _RE_APAGAR_ATALHO.match(texto)
+    if m:
+        nome_bruto = m.group(1)
+        nome = atalhos_store.nome_normalizado(nome_bruto)
+        try:
+            removido = atalhos_store.remover_atalho(nome_bruto)
+        except Exception as e:
+            log.error("Erro ao apagar atalho: %s", e)
+            return "⚠️ Não consegui apagar o atalho agora, tenta de novo daqui a pouco."
+        if removido:
+            return f"🗑️ Atalho */{nome}* apagado."
+        if nome in _COMANDOS_PADRAO:
+            return f"*/{nome}* é um atalho padrão do sistema, não dá pra apagar."
+        return f"Não encontrei nenhum atalho chamado */{nome}*."
+
+    return None
 
 
 def chat_response(sender: str, message: str) -> str:
+    resposta_comando = _tratar_comando_atalho(message)
+    if resposta_comando is not None:
+        history = _histories.setdefault(sender, [])
+        history.append({"role": "user", "content": message})
+        history.append({"role": "assistant", "content": resposta_comando})
+        return resposta_comando
+
     message = _expandir_comando_padrao(message)
 
     history = _histories.setdefault(sender, [])

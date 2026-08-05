@@ -31,6 +31,11 @@ TIMEZONE     = os.getenv("TIMEZONE", "America/Sao_Paulo")
 WEBHOOK_PORT  = int(os.getenv("WEBHOOK_PORT", "8000"))
 WEBHOOK_TOKEN = os.getenv("WEBHOOK_TOKEN", "")
 
+# URL pública onde este serviço (webhook_server.py) está hospedado.
+# Necessária para montar links absolutos (ex.: download de Excel) que funcionem
+# fora do navegador — WhatsApp não resolve URLs relativas.
+PUBLIC_BASE_URL = os.getenv("PUBLIC_BASE_URL", "").rstrip("/")
+
 # MinIO
 SAVE_MINIO_COPY  = os.getenv("SAVE_MINIO_COPY", "false").lower() == "true"
 MINIO_ENDPOINT   = os.getenv("MINIO_ENDPOINT", "")
